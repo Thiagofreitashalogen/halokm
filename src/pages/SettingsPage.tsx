@@ -1,4 +1,4 @@
-import { Settings, Database, Users, FileText } from 'lucide-react';
+import { Settings, Database, Users, FileText, Palette } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/knowledge/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -96,6 +96,26 @@ const SettingsPage = () => {
                 Configure templates for offer writing and define your brand voice.
               </p>
               <Button variant="outline" size="sm">Manage Templates</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                  <Palette className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Style Guides</CardTitle>
+                  <CardDescription>Define visual and brand guidelines</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Manage style guides, brand assets, and visual standards for consistent outputs.
+              </p>
+              <Button variant="outline" size="sm">Manage Style Guides</Button>
             </CardContent>
           </Card>
         </div>
