@@ -1,7 +1,7 @@
 export type KnowledgeCategory = 'project' | 'offer' | 'method';
 
-export type OfferStatus = 'won' | 'lost' | 'pending';
-export type ProjectStatus = 'active' | 'completed';
+export type OfferStatus = 'won' | 'lost' | 'pending' | 'draft';
+export type ProjectStatus = 'active' | 'completed' | 'archived';
 
 export interface KnowledgeEntry {
   id: string;
@@ -18,6 +18,7 @@ export interface KnowledgeEntry {
   startDate?: Date;
   endDate?: Date;
   learnings?: string[];
+  deliverables?: string[];
   
   // Offer specific
   offerStatus?: OfferStatus;
@@ -27,6 +28,7 @@ export interface KnowledgeEntry {
   
   // Method/Tool specific
   useCase?: string;
+  useCases?: string[];
   steps?: string[];
   
   // Common
