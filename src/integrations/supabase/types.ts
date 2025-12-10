@@ -14,7 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      knowledge_entries: {
+        Row: {
+          category: Database["public"]["Enums"]["knowledge_category"]
+          client: string | null
+          created_at: string
+          deliverables: string[] | null
+          description: string | null
+          id: string
+          learnings: string[] | null
+          loss_factors: string[] | null
+          offer_status: Database["public"]["Enums"]["offer_status"] | null
+          project_status: Database["public"]["Enums"]["project_status"] | null
+          source_drive_link: string | null
+          source_miro_link: string | null
+          steps: string[] | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          use_cases: string[] | null
+          win_factors: string[] | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["knowledge_category"]
+          client?: string | null
+          created_at?: string
+          deliverables?: string[] | null
+          description?: string | null
+          id?: string
+          learnings?: string[] | null
+          loss_factors?: string[] | null
+          offer_status?: Database["public"]["Enums"]["offer_status"] | null
+          project_status?: Database["public"]["Enums"]["project_status"] | null
+          source_drive_link?: string | null
+          source_miro_link?: string | null
+          steps?: string[] | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          use_cases?: string[] | null
+          win_factors?: string[] | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["knowledge_category"]
+          client?: string | null
+          created_at?: string
+          deliverables?: string[] | null
+          description?: string | null
+          id?: string
+          learnings?: string[] | null
+          loss_factors?: string[] | null
+          offer_status?: Database["public"]["Enums"]["offer_status"] | null
+          project_status?: Database["public"]["Enums"]["project_status"] | null
+          source_drive_link?: string | null
+          source_miro_link?: string | null
+          steps?: string[] | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          use_cases?: string[] | null
+          win_factors?: string[] | null
+        }
+        Relationships: []
+      }
+      project_method_links: {
+        Row: {
+          created_at: string
+          id: string
+          method_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          method_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          method_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_method_links_method_id_fkey"
+            columns: ["method_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_method_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +121,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      knowledge_category: "project" | "offer" | "method"
+      offer_status: "draft" | "pending" | "won" | "lost"
+      project_status: "active" | "completed" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +250,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      knowledge_category: ["project", "offer", "method"],
+      offer_status: ["draft", "pending", "won", "lost"],
+      project_status: ["active", "completed", "archived"],
+    },
   },
 } as const
