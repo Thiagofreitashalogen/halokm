@@ -16,10 +16,10 @@ import {
 
 const mainNavItems = [
   { title: 'All Entries', url: '/', icon: Database },
-  { title: 'Projects', url: '/projects', icon: FolderOpen },
   { title: 'Offers', url: '/offers', icon: FileText },
-  { title: 'Methods & Tools', url: '/methods', icon: Lightbulb },
+  { title: 'Projects', url: '/projects', icon: FolderOpen },
   { title: 'Clients', url: '/clients', icon: Users },
+  { title: 'Methods & Tools', url: '/methods', icon: Lightbulb },
   { title: 'People', url: '/people', icon: UserCircle },
 ];
 
