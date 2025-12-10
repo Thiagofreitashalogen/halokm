@@ -1,4 +1,4 @@
-import { Database, FileText, Lightbulb, FolderOpen, Search, Settings, Sparkles } from 'lucide-react';
+import { Database, FileText, Lightbulb, FolderOpen, Search, Settings, Sparkles, Users } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
@@ -19,6 +19,7 @@ const mainNavItems = [
   { title: 'Projects', url: '/projects', icon: FolderOpen },
   { title: 'Offers', url: '/offers', icon: FileText },
   { title: 'Methods & Tools', url: '/methods', icon: Lightbulb },
+  { title: 'Clients', url: '/clients', icon: Users },
 ];
 
 const toolsNavItems = [
