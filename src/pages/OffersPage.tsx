@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Database, FolderOpen, FileText, Lightbulb, TrendingUp, TrendingDown } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/knowledge/PageHeader';
 import { FilterBar } from '@/components/knowledge/FilterBar';
@@ -9,31 +9,38 @@ import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
 import { Card, CardContent } from '@/components/ui/card';
 
-const Index = () => {
-  const { entries, filters, setFilters, stats } = useKnowledge();
+const OffersPage = () => {
+  const { entries, allEntries, filters, setFilters, stats } = useKnowledge('offer');
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
 
-  const statCards = [
-    { label: 'Projects', value: stats.projects, icon: FolderOpen, color: 'text-category-project' },
-    { label: 'Offers', value: stats.offers, icon: FileText, color: 'text-category-offer' },
-    { label: 'Methods', value: stats.methods, icon: Lightbulb, color: 'text-category-method' },
-    { label: 'Won', value: stats.wonOffers, icon: TrendingUp, color: 'text-status-won' },
-    { label: 'Lost', value: stats.lostOffers, icon: TrendingDown, color: 'text-status-lost' },
+  const offerEntries = allEntries.filter(e => e.category === 'offer');
+  const wonCount = offerEntries.filter(e => e.offerStatus === 'won').length;
+  const lostCount = offerEntries.filter(e => e.offerStatus === 'lost').length;
+  const pendingCount = offerEntries.filter(e => e.offerStatus === 'pending').length;
+  const winRate = offerEntries.length > 0 
+    ? Math.round((wonCount / (wonCount + lostCount)) * 100) 
+    : 0;
+
+  const offerStats = [
+    { label: 'Won', value: wonCount, icon: TrendingUp, color: 'text-status-won' },
+    { label: 'Lost', value: lostCount, icon: TrendingDown, color: 'text-status-lost' },
+    { label: 'Pending', value: pendingCount, icon: Clock, color: 'text-status-pending' },
+    { label: 'Win Rate', value: `${winRate}%`, icon: FileText, color: 'text-foreground' },
   ];
 
   return (
     <MainLayout>
       <div className="p-6 max-w-7xl mx-auto fade-in">
         <PageHeader
-          title="All Entries"
-          description="Browse and search your organization's knowledge base"
-          icon={<Database className="w-5 h-5 text-muted-foreground" />}
-          count={entries.length}
+          title="Offers"
+          description="Track proposals, tenders, and their outcomes"
+          icon={<FileText className="w-5 h-5 text-category-offer" />}
+          count={stats.total}
         />
 
-        {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
-          {statCards.map((stat) => (
+        {/* Offer stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {offerStats.map((stat) => (
             <Card key={stat.label} className="border-border/60">
               <CardContent className="p-4 flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg bg-muted flex items-center justify-center ${stat.color}`}>
@@ -48,7 +55,11 @@ const Index = () => {
           ))}
         </div>
 
-        <FilterBar filters={filters} onFiltersChange={setFilters} />
+        <FilterBar 
+          filters={filters} 
+          onFiltersChange={setFilters} 
+          showCategoryFilter={false}
+        />
 
         <div className="mt-6">
           <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} />
@@ -64,4 +75,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default OffersPage;
