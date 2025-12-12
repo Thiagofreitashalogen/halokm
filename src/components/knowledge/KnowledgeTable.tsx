@@ -1,4 +1,4 @@
-import { KnowledgeEntry } from '@/types/knowledge';
+import { KnowledgeEntry, KnowledgeCategory } from '@/types/knowledge';
 import { CategoryBadge } from './CategoryBadge';
 import { StatusBadge } from './StatusBadge';
 import { format } from 'date-fns';
@@ -17,9 +17,85 @@ interface KnowledgeTableProps {
   onEntryClick?: (entry: KnowledgeEntry) => void;
   selectedIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
+  category?: KnowledgeCategory | null;
 }
 
-export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelectionChange }: KnowledgeTableProps) {
+// Define column configurations per category
+const getCategoryColumns = (category: KnowledgeCategory | null | undefined) => {
+  switch (category) {
+    case 'project':
+      return {
+        col1: { header: 'Status', width: 'w-[100px]' },
+        col2: { header: 'Client', width: '' },
+      };
+    case 'offer':
+      return {
+        col1: { header: 'Status', width: 'w-[100px]' },
+        col2: { header: 'Client', width: '' },
+      };
+    case 'method':
+      return {
+        col1: { header: 'Field', width: 'w-[120px]' },
+        col2: { header: 'Domain', width: '' },
+      };
+    case 'client':
+      return {
+        col1: { header: 'Industry', width: 'w-[120px]' },
+        col2: { header: 'Projects', width: '' },
+      };
+    case 'person':
+      return {
+        col1: { header: 'Position', width: 'w-[120px]' },
+        col2: { header: 'Studio', width: '' },
+      };
+    default:
+      // Mixed categories (e.g., search results, All Entries)
+      return {
+        col1: { header: 'Status', width: 'w-[100px]' },
+        col2: { header: 'Details', width: '' },
+      };
+  }
+};
+
+// Get cell content based on category
+const getCellContent = (entry: KnowledgeEntry, column: 'col1' | 'col2') => {
+  const category = entry.category;
+  
+  if (column === 'col1') {
+    switch (category) {
+      case 'project':
+        return entry.projectStatus ? <StatusBadge status={entry.projectStatus} /> : '—';
+      case 'offer':
+        return entry.offerStatus ? <StatusBadge status={entry.offerStatus} /> : '—';
+      case 'method':
+        return entry.field || '—';
+      case 'client':
+        return entry.industry || '—';
+      case 'person':
+        return entry.position || '—';
+      default:
+        return entry.projectStatus ? <StatusBadge status={entry.projectStatus} /> : 
+               entry.offerStatus ? <StatusBadge status={entry.offerStatus} /> : '—';
+    }
+  } else {
+    switch (category) {
+      case 'project':
+      case 'offer':
+        return entry.client || '—';
+      case 'method':
+        return entry.domain || '—';
+      case 'client':
+        // Would need project count, showing placeholder for now
+        return entry.industry ? 'View details' : '—';
+      case 'person':
+        return entry.studio || '—';
+      default:
+        return entry.client || entry.domain || entry.studio || '—';
+    }
+  }
+};
+
+export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelectionChange, category }: KnowledgeTableProps) {
   const allSelected = entries.length > 0 && selectedIds.size === entries.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < entries.length;
 
@@ -52,6 +128,9 @@ export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelection
     );
   }
 
+  const columns = getCategoryColumns(category);
+  const showCategoryColumn = !category; // Only show category column when viewing mixed entries
+
   return (
     <div className="rounded-lg border border-border/60 overflow-hidden">
       <Table>
@@ -70,9 +149,11 @@ export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelection
               />
             </TableHead>
             <TableHead className="w-[250px]">Title</TableHead>
-            <TableHead className="w-[100px]">Category</TableHead>
-            <TableHead className="w-[100px]">Status</TableHead>
-            <TableHead>Client</TableHead>
+            {showCategoryColumn && (
+              <TableHead className="w-[100px]">Category</TableHead>
+            )}
+            <TableHead className={columns.col1.width}>{columns.col1.header}</TableHead>
+            <TableHead className={columns.col2.width}>{columns.col2.header}</TableHead>
             <TableHead className="w-[120px]">Updated</TableHead>
           </TableRow>
         </TableHeader>
@@ -92,19 +173,16 @@ export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelection
                 />
               </TableCell>
               <TableCell className="font-medium">{entry.title}</TableCell>
-              <TableCell>
-                <CategoryBadge category={entry.category} />
-              </TableCell>
-              <TableCell>
-                {entry.projectStatus && (
-                  <StatusBadge status={entry.projectStatus} />
-                )}
-                {entry.offerStatus && (
-                  <StatusBadge status={entry.offerStatus} />
-                )}
+              {showCategoryColumn && (
+                <TableCell>
+                  <CategoryBadge category={entry.category} />
+                </TableCell>
+              )}
+              <TableCell className="text-muted-foreground">
+                {getCellContent(entry, 'col1')}
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {entry.client || '—'}
+                {getCellContent(entry, 'col2')}
               </TableCell>
               <TableCell className="text-muted-foreground text-sm">
                 {format(entry.updatedAt, 'MMM d, yyyy')}

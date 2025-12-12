@@ -32,7 +32,7 @@ const MethodsPage = () => {
         />
 
         <div className="mt-6">
-          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={refetch} />
+          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={refetch} category="method" />
         </div>
 
         <EntryDetailSheet

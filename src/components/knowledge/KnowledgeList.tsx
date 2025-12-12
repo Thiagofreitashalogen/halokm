@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LayoutGrid, List, Trash2 } from 'lucide-react';
-import { KnowledgeEntry } from '@/types/knowledge';
+import { KnowledgeEntry, KnowledgeCategory } from '@/types/knowledge';
 import { KnowledgeCard } from './KnowledgeCard';
 import { KnowledgeTable } from './KnowledgeTable';
 import { Toggle } from '@/components/ui/toggle';
@@ -22,11 +22,12 @@ interface KnowledgeListProps {
   entries: KnowledgeEntry[];
   onEntryClick?: (entry: KnowledgeEntry) => void;
   onEntriesDeleted?: () => void;
+  category?: KnowledgeCategory | null;
 }
 
 type ViewMode = 'cards' | 'table';
 
-export function KnowledgeList({ entries, onEntryClick, onEntriesDeleted }: KnowledgeListProps) {
+export function KnowledgeList({ entries, onEntryClick, onEntriesDeleted, category }: KnowledgeListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
@@ -126,6 +127,7 @@ export function KnowledgeList({ entries, onEntryClick, onEntriesDeleted }: Knowl
           onEntryClick={onEntryClick}
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
+          category={category}
         />
       )}
 
