@@ -12,7 +12,7 @@ interface KnowledgeCardProps {
 }
 
 export function KnowledgeCard({ entry, onClick }: KnowledgeCardProps) {
-  const status = entry.offerOutcome || entry.projectStatus;
+  const status = entry.offerStatus || entry.projectStatus;
 
   return (
     <Card
