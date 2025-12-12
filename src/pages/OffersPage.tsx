@@ -11,7 +11,7 @@ import { KnowledgeEntry } from '@/types/knowledge';
 import { Card, CardContent } from '@/components/ui/card';
 
 const OffersPage = () => {
-  const { entries, allEntries, filters, setFilters, stats } = useKnowledge('offer');
+  const { entries, allEntries, filters, setFilters, stats, refetch } = useKnowledge('offer');
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -30,9 +30,6 @@ const OffersPage = () => {
     { label: 'Win Rate', value: `${winRate}%`, icon: FileText, color: 'text-foreground' },
   ];
 
-  const handleEntryAdded = () => {
-    window.location.reload();
-  };
 
   return (
     <MainLayout>
@@ -68,21 +65,22 @@ const OffersPage = () => {
           showCategoryFilter={false}
         />
 
+
         <div className="mt-6">
-          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} />
+          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={refetch} />
         </div>
 
         <EntryDetailSheet
           entry={selectedEntry}
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
-          onEntryUpdated={handleEntryAdded}
+          onEntryUpdated={refetch}
         />
 
         <AddEntryDialog
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
-          onEntryAdded={handleEntryAdded}
+          onEntryAdded={refetch}
           defaultCategory="offer"
         />
       </div>

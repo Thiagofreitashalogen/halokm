@@ -96,7 +96,7 @@ const ProjectsPage = () => {
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading projects...</div>
           ) : (
-            <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} />
+            <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={fetchProjects} />
           )}
         </div>
 

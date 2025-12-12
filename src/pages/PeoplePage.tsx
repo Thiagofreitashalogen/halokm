@@ -86,7 +86,7 @@ const PeoplePage = () => {
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading people...</div>
           ) : (
-            <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} />
+            <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={fetchPeople} />
           )}
         </div>
 
