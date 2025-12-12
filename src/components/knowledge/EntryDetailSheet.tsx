@@ -38,6 +38,9 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   const [newUseCase, setNewUseCase] = useState('');
   const [newReference, setNewReference] = useState('');
   
+  // Linked client for project/offer view
+  const [linkedClient, setLinkedClient] = useState<{id: string; title: string} | null>(null);
+  
   // Linked entities for client view
   const [linkedProjects, setLinkedProjects] = useState<{id: string; title: string}[]>([]);
   const [linkedPeople, setLinkedPeople] = useState<{id: string; title: string}[]>([]);
@@ -49,6 +52,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   // Linked entities for offer view
   const [linkedOfferMethods, setLinkedOfferMethods] = useState<{id: string; title: string}[]>([]);
   const [linkedOfferPeople, setLinkedOfferPeople] = useState<{id: string; title: string}[]>([]);
+  const [linkedOfferClient, setLinkedOfferClient] = useState<{id: string; title: string} | null>(null);
   
   // Edit state for client linked entities
   const [editLinkedProjectIds, setEditLinkedProjectIds] = useState<string[]>([]);
@@ -104,8 +108,25 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         }
       }
       
-      // Project: fetch linked methods and people
+      // Project: fetch linked client, methods and people
       if (entry.category === 'project') {
+        // Fetch linked client
+        const { data: clientLinks } = await supabase
+          .from('project_client_links')
+          .select('client_id')
+          .eq('project_id', entry.id);
+        
+        if (clientLinks && clientLinks.length > 0) {
+          const { data: client } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .eq('id', clientLinks[0].client_id)
+            .maybeSingle();
+          setLinkedClient(client);
+        } else {
+          setLinkedClient(null);
+        }
+        
         // Fetch linked methods
         const { data: methodLinks } = await supabase
           .from('project_method_links')
@@ -141,8 +162,25 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         }
       }
       
-      // Offer: fetch linked methods and people
+      // Offer: fetch linked client, methods and people
       if (entry.category === 'offer') {
+        // Fetch linked client
+        const { data: clientLinks } = await supabase
+          .from('offer_client_links')
+          .select('client_id')
+          .eq('offer_id', entry.id);
+        
+        if (clientLinks && clientLinks.length > 0) {
+          const { data: client } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .eq('id', clientLinks[0].client_id)
+            .maybeSingle();
+          setLinkedOfferClient(client);
+        } else {
+          setLinkedOfferClient(null);
+        }
+        
         // Fetch linked methods
         const { data: methodLinks } = await supabase
           .from('offer_method_links')
@@ -186,6 +224,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setEditLinkedPeopleIds([]);
     setEditLinkedOfferMethodIds([]);
     setEditLinkedOfferPeopleIds([]);
+    setLinkedClient(null);
+    setLinkedOfferClient(null);
     
     fetchLinkedEntities();
   }, [entry?.id]);
@@ -592,10 +632,16 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               </div>
             ) : (
               <>
-                {(entry.category === 'project' || entry.category === 'offer') && (
+                {entry.category === 'project' && (
                   <span className="flex items-center gap-1.5">
                     <Building2 className="w-4 h-4" />
-                    {entry.client || <span className="italic text-muted-foreground/70">No client</span>}
+                    {linkedClient?.title || entry.client || <span className="italic text-muted-foreground/70">No client</span>}
+                  </span>
+                )}
+                {entry.category === 'offer' && (
+                  <span className="flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4" />
+                    {linkedOfferClient?.title || entry.client || <span className="italic text-muted-foreground/70">No client</span>}
                   </span>
                 )}
                 {entry.startDate && (

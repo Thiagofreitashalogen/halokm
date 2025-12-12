@@ -522,6 +522,16 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
           });
       }
 
+      // Link offer to client
+      if (summary.category === 'offer' && clientId) {
+        await supabase
+          .from('offer_client_links')
+          .insert({
+            offer_id: entryData.id,
+            client_id: clientId,
+          });
+      }
+
       // Helper function to get or create a method
       const getOrCreateMethod = async (methodName: string): Promise<string> => {
         const { data: existingMethod } = await supabase

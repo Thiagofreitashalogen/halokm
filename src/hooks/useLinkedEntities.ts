@@ -7,80 +7,60 @@ interface LinkedEntity {
   title: string;
 }
 
-interface LinkedEntitiesMap {
-  [entryId: string]: {
-    clients?: LinkedEntity[];
-    methods?: LinkedEntity[];
-    people?: LinkedEntity[];
-  };
-}
-
-// Fetch linked clients for a single entry (project or offer)
-export async function fetchLinkedClient(entryId: string, category: KnowledgeCategory): Promise<LinkedEntity | null> {
-  if (category !== 'project' && category !== 'offer') return null;
-  
-  const linkTable = category === 'project' ? 'project_client_links' : 'project_client_links';
-  const linkColumn = category === 'project' ? 'project_id' : 'project_id';
-  
-  // For projects, use project_client_links
-  if (category === 'project') {
-    const { data: links } = await supabase
-      .from('project_client_links')
-      .select('client_id')
-      .eq('project_id', entryId);
-    
-    if (links && links.length > 0) {
-      const { data: client } = await supabase
-        .from('knowledge_entries')
-        .select('id, title')
-        .eq('id', links[0].client_id)
-        .maybeSingle();
-      
-      return client;
-    }
-  }
-  
-  // For offers, we need to check if there's a client link table for offers
-  // Looking at the schema, offers don't have a direct client link table
-  // They store client as text. Let's check for offer_client_links or use project_client_links pattern
-  // Based on schema, there's no offer_client_links, so we need to add one or use the text field
-  // For now, let's return null for offers and we can add the table later
-  
-  return null;
-}
-
 // Fetch linked clients for multiple entries at once (for table view)
-export async function fetchLinkedClientsForEntries(entryIds: string[]): Promise<Record<string, LinkedEntity | null>> {
+export async function fetchLinkedClientsForEntries(
+  entryIds: string[], 
+  categories: Record<string, KnowledgeCategory>
+): Promise<Record<string, LinkedEntity | null>> {
   if (entryIds.length === 0) return {};
   
   const result: Record<string, LinkedEntity | null> = {};
   
-  // Fetch all project_client_links for these entries
-  const { data: projectLinks } = await supabase
-    .from('project_client_links')
-    .select('project_id, client_id')
-    .in('project_id', entryIds);
+  // Separate project and offer IDs
+  const projectIds = entryIds.filter(id => categories[id] === 'project');
+  const offerIds = entryIds.filter(id => categories[id] === 'offer');
   
-  if (!projectLinks || projectLinks.length === 0) {
-    entryIds.forEach(id => result[id] = null);
-    return result;
+  // Fetch project_client_links
+  if (projectIds.length > 0) {
+    const { data: projectLinks } = await supabase
+      .from('project_client_links')
+      .select('project_id, client_id')
+      .in('project_id', projectIds);
+    
+    if (projectLinks && projectLinks.length > 0) {
+      const clientIds = [...new Set(projectLinks.map(l => l.client_id))];
+      const { data: clients } = await supabase
+        .from('knowledge_entries')
+        .select('id, title')
+        .in('id', clientIds);
+      
+      const clientMap = new Map(clients?.map(c => [c.id, c]) || []);
+      projectLinks.forEach(link => {
+        result[link.project_id] = clientMap.get(link.client_id) || null;
+      });
+    }
   }
   
-  // Get unique client IDs
-  const clientIds = [...new Set(projectLinks.map(l => l.client_id))];
-  
-  // Fetch all clients
-  const { data: clients } = await supabase
-    .from('knowledge_entries')
-    .select('id, title')
-    .in('id', clientIds);
-  
-  const clientMap = new Map(clients?.map(c => [c.id, c]) || []);
-  
-  // Map project IDs to their clients
-  projectLinks.forEach(link => {
-    result[link.project_id] = clientMap.get(link.client_id) || null;
-  });
+  // Fetch offer_client_links
+  if (offerIds.length > 0) {
+    const { data: offerLinks } = await supabase
+      .from('offer_client_links')
+      .select('offer_id, client_id')
+      .in('offer_id', offerIds);
+    
+    if (offerLinks && offerLinks.length > 0) {
+      const clientIds = [...new Set(offerLinks.map(l => l.client_id))];
+      const { data: clients } = await supabase
+        .from('knowledge_entries')
+        .select('id, title')
+        .in('id', clientIds);
+      
+      const clientMap = new Map(clients?.map(c => [c.id, c]) || []);
+      offerLinks.forEach(link => {
+        result[link.offer_id] = clientMap.get(link.client_id) || null;
+      });
+    }
+  }
   
   // Fill in nulls for entries without links
   entryIds.forEach(id => {
@@ -97,19 +77,26 @@ export function useLinkedClientsForTable(entries: { id: string; category: Knowle
   
   useEffect(() => {
     const fetchClients = async () => {
-      // Only fetch for projects (offers don't have client junction table yet)
-      const projectIds = entries
-        .filter(e => e.category === 'project')
-        .map(e => e.id);
+      // Filter for projects and offers
+      const relevantEntries = entries.filter(e => e.category === 'project' || e.category === 'offer');
       
-      if (projectIds.length === 0) {
+      if (relevantEntries.length === 0) {
         setLinkedClients({});
         return;
       }
       
+      // Build category map
+      const categoryMap: Record<string, KnowledgeCategory> = {};
+      relevantEntries.forEach(e => {
+        categoryMap[e.id] = e.category;
+      });
+      
       setIsLoading(true);
       try {
-        const clients = await fetchLinkedClientsForEntries(projectIds);
+        const clients = await fetchLinkedClientsForEntries(
+          relevantEntries.map(e => e.id),
+          categoryMap
+        );
         setLinkedClients(clients);
       } catch (error) {
         console.error('Error fetching linked clients:', error);
@@ -198,8 +185,23 @@ export function useLinkedEntitiesForEntry(entryId: string | null, category: Know
       
       // Fetch linked entities for offers
       if (category === 'offer') {
-        // Offers don't have client junction table - we'll add one
-        setLinkedClient(null);
+        // Fetch linked client from offer_client_links
+        const { data: clientLinks } = await supabase
+          .from('offer_client_links')
+          .select('client_id')
+          .eq('offer_id', entryId);
+        
+        if (clientLinks && clientLinks.length > 0) {
+          const { data: client } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .eq('id', clientLinks[0].client_id)
+            .maybeSingle();
+          
+          setLinkedClient(client);
+        } else {
+          setLinkedClient(null);
+        }
         
         // Fetch linked methods
         const { data: methodLinks } = await supabase
@@ -238,6 +240,8 @@ export function useLinkedEntitiesForEntry(entryId: string | null, category: Know
       
       // Fetch linked entities for clients
       if (category === 'client') {
+        setLinkedClient(null);
+        
         // Fetch linked projects
         const { data: projectLinks } = await supabase
           .from('project_client_links')
@@ -250,7 +254,6 @@ export function useLinkedEntitiesForEntry(entryId: string | null, category: Know
             .select('id, title')
             .in('id', projectLinks.map(l => l.project_id));
           
-          // Store projects in methods for now (we can refactor later)
           setLinkedMethods(projects || []);
         } else {
           setLinkedMethods([]);
