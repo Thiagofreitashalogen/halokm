@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KnowledgeEntry, KnowledgeCategory } from '@/types/knowledge';
 import { CategoryBadge } from './CategoryBadge';
 import { StatusBadge } from './StatusBadge';
+import { EntityAutocomplete } from './EntityAutocomplete';
 import {
   Sheet,
   SheetContent,
@@ -114,6 +115,25 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         .eq('id', entry.id);
 
       if (error) throw error;
+
+      // Handle project-client linking
+      if (entry.category === 'project' && editData.clientIds && editData.clientIds.length > 0) {
+        // Remove existing links
+        await supabase
+          .from('project_client_links')
+          .delete()
+          .eq('project_id', entry.id);
+
+        // Add new links
+        for (const clientId of editData.clientIds) {
+          await supabase
+            .from('project_client_links')
+            .insert({
+              project_id: entry.id,
+              client_id: clientId,
+            });
+        }
+      }
 
       toast({
         title: 'Entry updated',
@@ -247,14 +267,20 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         <div className="mt-6 space-y-6">
           {/* Meta info */}
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            {isEditing ? (
+            {isEditing && (entry.category === 'project' || entry.category === 'offer') ? (
               <div className="w-full space-y-2">
                 <Label className="text-xs">Client</Label>
-                <Input
+                <EntityAutocomplete
+                  category="client"
                   value={editData.client || ''}
-                  onChange={(e) => updateField('client', e.target.value)}
-                  placeholder="Client name"
-                  className="h-8"
+                  onChange={(value, entityId) => {
+                    updateField('client', value);
+                    // Store the client ID for linking
+                    if (entityId) {
+                      updateField('clientIds', [entityId]);
+                    }
+                  }}
+                  placeholder="Search or create client..."
                 />
               </div>
             ) : (
