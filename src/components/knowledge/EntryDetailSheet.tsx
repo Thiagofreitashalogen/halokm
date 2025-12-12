@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { KnowledgeEntry, KnowledgeCategory } from '@/types/knowledge';
 import { CategoryBadge } from './CategoryBadge';
 import { StatusBadge } from './StatusBadge';
@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink } from 'lucide-react';
+import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink, FolderKanban, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -37,6 +37,53 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   const [newLearning, setNewLearning] = useState('');
   const [newUseCase, setNewUseCase] = useState('');
   const [newReference, setNewReference] = useState('');
+  
+  // Linked entities for client view
+  const [linkedProjects, setLinkedProjects] = useState<{id: string; title: string}[]>([]);
+  const [linkedPeople, setLinkedPeople] = useState<{id: string; title: string}[]>([]);
+
+  // Fetch linked entities when viewing a client
+  useEffect(() => {
+    const fetchLinkedEntities = async () => {
+      if (!entry || entry.category !== 'client') return;
+      
+      // Fetch linked projects
+      const { data: projectLinks } = await supabase
+        .from('project_client_links')
+        .select('project_id')
+        .eq('client_id', entry.id);
+      
+      if (projectLinks && projectLinks.length > 0) {
+        const projectIds = projectLinks.map(l => l.project_id);
+        const { data: projects } = await supabase
+          .from('knowledge_entries')
+          .select('id, title')
+          .in('id', projectIds);
+        setLinkedProjects(projects || []);
+      } else {
+        setLinkedProjects([]);
+      }
+      
+      // Fetch linked people
+      const { data: peopleLinks } = await supabase
+        .from('people_client_links')
+        .select('person_id')
+        .eq('client_id', entry.id);
+      
+      if (peopleLinks && peopleLinks.length > 0) {
+        const peopleIds = peopleLinks.map(l => l.person_id);
+        const { data: people } = await supabase
+          .from('knowledge_entries')
+          .select('id, title')
+          .in('id', peopleIds);
+        setLinkedPeople(people || []);
+      } else {
+        setLinkedPeople([]);
+      }
+    };
+    
+    fetchLinkedEntities();
+  }, [entry]);
 
   if (!entry) return null;
 
@@ -313,21 +360,23 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
 
           <Separator />
 
-          {/* Description */}
-          <div>
-            <h4 className="text-sm font-medium mb-2">Description</h4>
-            {isEditing ? (
-              <Textarea
-                value={editData.description || ''}
-                onChange={(e) => updateField('description', e.target.value)}
-                className="min-h-[80px] resize-none"
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {entry.description}
-              </p>
-            )}
-          </div>
+          {/* Description - hide for clients */}
+          {entry.category !== 'client' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Description</h4>
+              {isEditing ? (
+                <Textarea
+                  value={editData.description || ''}
+                  onChange={(e) => updateField('description', e.target.value)}
+                  className="min-h-[80px] resize-none"
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {entry.description}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* People specific: Studio & Position */}
           {entry.category === 'person' && (
@@ -365,48 +414,74 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             </div>
           )}
 
-          {/* Client specific: Industry */}
+          {/* Client specific: Linked Projects */}
           {entry.category === 'client' && (
             <div>
-              <h4 className="text-sm font-medium mb-2">Industry</h4>
-              {isEditing ? (
-                <Input
-                  value={editData.industry || ''}
-                  onChange={(e) => updateField('industry', e.target.value)}
-                  placeholder="e.g., Healthcare, Finance, Technology"
-                  className="h-8"
-                />
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <FolderKanban className="w-4 h-4 text-primary" />
+                Projects
+              </h4>
+              {linkedProjects.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedProjects.map((project) => (
+                    <Badge key={project.id} variant="secondary" className="font-normal">
+                      {project.title}
+                    </Badge>
+                  ))}
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  {entry.industry || 'Not specified'}
-                </p>
+                <p className="text-sm text-muted-foreground">No projects linked</p>
               )}
             </div>
           )}
 
-          <div>
-            <h4 className="text-sm font-medium mb-2">Tags</h4>
-            {isEditing ? (
-              <EditableArrayField
-                items={editData.tags || []}
-                onAdd={(value) => addToArray('tags', value, setNewTag)}
-                onRemove={(index) => removeFromArray('tags', index)}
-                inputValue={newTag}
-                setInputValue={setNewTag}
-                placeholder="Add tag..."
-              />
-            ) : entry.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {entry.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="font-normal">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No tags</p>
-            )}
-          </div>
+          {/* Client specific: Linked People */}
+          {entry.category === 'client' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-primary" />
+                People Involved
+              </h4>
+              {linkedPeople.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedPeople.map((person) => (
+                    <Badge key={person.id} variant="secondary" className="font-normal">
+                      {person.title}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No people linked</p>
+              )}
+            </div>
+          )}
+
+          {/* Tags - hide for clients */}
+          {entry.category !== 'client' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Tags</h4>
+              {isEditing ? (
+                <EditableArrayField
+                  items={editData.tags || []}
+                  onAdd={(value) => addToArray('tags', value, setNewTag)}
+                  onRemove={(index) => removeFromArray('tags', index)}
+                  inputValue={newTag}
+                  setInputValue={setNewTag}
+                  placeholder="Add tag..."
+                />
+              ) : entry.tags.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {entry.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="font-normal">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No tags</p>
+              )}
+            </div>
+          )}
 
           {/* Project specific: Learnings */}
           {(entry.category === 'project' || (entry.learnings && entry.learnings.length > 0)) && (
