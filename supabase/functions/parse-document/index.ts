@@ -80,44 +80,67 @@ async function parseWithUnstructured(file: Blob, fileName: string): Promise<stri
     throw new Error('UNSTRUCTURED_API_KEY is not configured. Please add it in settings.');
   }
 
-  console.log('Parsing with Unstructured.io API...');
+  // Check file size - Unstructured has limits and edge functions have timeouts
+  const maxSizeBytes = 10 * 1024 * 1024; // 10MB limit for reliable processing
+  if (file.size > maxSizeBytes) {
+    throw new Error(`File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum supported size is 10MB. Please use a smaller file or compress the document.`);
+  }
+
+  console.log('Parsing with Unstructured.io API...', { fileSize: file.size, fileName });
   
   const formData = new FormData();
   formData.append('files', new File([file], fileName));
   
-  const response = await fetch('https://api.unstructuredapp.io/general/v0/general', {
-    method: 'POST',
-    headers: {
-      'unstructured-api-key': apiKey,
-    },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Unstructured API error:', errorText);
-    throw new Error(`Unstructured API error: ${response.status} - ${errorText}`);
-  }
-
-  const elements = await response.json();
-  console.log(`Unstructured returned ${elements.length} elements`);
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 55000); // 55 second timeout (edge function limit is 60s)
   
-  // Convert elements to readable text
-  const textParts: string[] = [];
-  
-  for (const element of elements) {
-    if (element.type === 'Title') {
-      textParts.push(`# ${element.text}`);
-    } else if (element.type === 'Header') {
-      textParts.push(`## ${element.text}`);
-    } else if (element.type === 'ListItem') {
-      textParts.push(`• ${element.text}`);
-    } else if (element.text) {
-      textParts.push(element.text);
+  try {
+    const response = await fetch('https://api.unstructuredapp.io/general/v0/general', {
+      method: 'POST',
+      headers: {
+        'unstructured-api-key': apiKey,
+      },
+      body: formData,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Unstructured API error:', { status: response.status, error: errorText });
+      throw new Error(`Unstructured API error: ${response.status} - ${errorText}`);
     }
+
+    const elements = await response.json();
+    console.log(`Unstructured returned ${elements.length} elements`);
+    
+    // Convert elements to readable text
+    const textParts: string[] = [];
+    
+    for (const element of elements) {
+      if (element.type === 'Title') {
+        textParts.push(`# ${element.text}`);
+      } else if (element.type === 'Header') {
+        textParts.push(`## ${element.text}`);
+      } else if (element.type === 'ListItem') {
+        textParts.push(`• ${element.text}`);
+      } else if (element.text) {
+        textParts.push(element.text);
+      }
+    }
+    
+    return textParts.join('\n\n');
+  } catch (error: unknown) {
+    clearTimeout(timeoutId);
+    
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Document processing timed out. The file may be too complex or large. Try a smaller file.');
+    }
+    
+    throw error;
   }
-  
-  return textParts.join('\n\n');
 }
 
 serve(async (req) => {
