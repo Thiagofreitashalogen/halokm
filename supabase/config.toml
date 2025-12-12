@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.analyze-entry]
 verify_jwt = false
+
+[functions.parse-document]
+verify_jwt = false
+
+[functions.fetch-google-drive]
+verify_jwt = false
