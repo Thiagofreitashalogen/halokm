@@ -340,7 +340,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      knowledge_category: "project" | "offer" | "method"
+      knowledge_category: "project" | "offer" | "method" | "client" | "person"
       offer_status: "draft" | "pending" | "won" | "lost"
       offer_work_status: "under_development" | "delivered"
       project_status: "active" | "completed" | "archived"
@@ -471,7 +471,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      knowledge_category: ["project", "offer", "method"],
+      knowledge_category: ["project", "offer", "method", "client", "person"],
       offer_status: ["draft", "pending", "won", "lost"],
       offer_work_status: ["under_development", "delivered"],
       project_status: ["active", "completed", "archived"],

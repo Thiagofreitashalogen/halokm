@@ -1,13 +1,13 @@
 import { cn } from '@/lib/utils';
 import { KnowledgeCategory } from '@/types/knowledge';
-import { FolderOpen, FileText, Lightbulb } from 'lucide-react';
+import { FolderOpen, FileText, Lightbulb, Building2, UserCircle } from 'lucide-react';
 
 interface CategoryBadgeProps {
   category: KnowledgeCategory;
   className?: string;
 }
 
-const categoryConfig = {
+const categoryConfig: Record<KnowledgeCategory, { label: string; icon: typeof FolderOpen; className: string }> = {
   project: {
     label: 'Project',
     icon: FolderOpen,
@@ -23,10 +23,22 @@ const categoryConfig = {
     icon: Lightbulb,
     className: 'bg-category-method/10 text-category-method border-category-method/20',
   },
+  client: {
+    label: 'Client',
+    icon: Building2,
+    className: 'bg-primary/10 text-primary border-primary/20',
+  },
+  person: {
+    label: 'Person',
+    icon: UserCircle,
+    className: 'bg-accent/10 text-accent-foreground border-accent/20',
+  },
 };
 
 export function CategoryBadge({ category, className }: CategoryBadgeProps) {
   const config = categoryConfig[category];
+  if (!config) return null;
+  
   const Icon = config.icon;
 
   return (
