@@ -96,6 +96,7 @@ const ClientsPage = () => {
             entries={filteredEntries}
             onEntryClick={handleEntryClick}
             onEntriesDeleted={fetchEntries}
+            category="client"
           />
         </div>
 
