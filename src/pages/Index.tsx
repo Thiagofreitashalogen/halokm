@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/knowledge/PageHeader';
 import { FilterBar } from '@/components/knowledge/FilterBar';
 import { KnowledgeList } from '@/components/knowledge/KnowledgeList';
 import { EntryDetailSheet } from '@/components/knowledge/EntryDetailSheet';
+import { AddEntryDialog } from '@/components/knowledge/AddEntryDialog';
 import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 const Index = () => {
   const { entries, filters, setFilters, stats } = useKnowledge();
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const statCards = [
     { label: 'Projects', value: stats.projects, icon: FolderOpen, color: 'text-category-project' },
@@ -21,6 +23,11 @@ const Index = () => {
     { label: 'Lost', value: stats.lostOffers, icon: TrendingDown, color: 'text-status-lost' },
   ];
 
+  const handleEntryAdded = () => {
+    // Refresh would happen via the useKnowledge hook in a full implementation
+    window.location.reload();
+  };
+
   return (
     <MainLayout>
       <div className="p-6 max-w-7xl mx-auto fade-in">
@@ -29,6 +36,7 @@ const Index = () => {
           description="Browse and search your organization's knowledge base"
           icon={<Database className="w-5 h-5 text-muted-foreground" />}
           count={entries.length}
+          onAddClick={() => setShowAddDialog(true)}
         />
 
         {/* Stats row */}
@@ -58,6 +66,12 @@ const Index = () => {
           entry={selectedEntry}
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
+        />
+
+        <AddEntryDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onEntryAdded={handleEntryAdded}
         />
       </div>
     </MainLayout>

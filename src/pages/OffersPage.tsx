@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/knowledge/PageHeader';
 import { FilterBar } from '@/components/knowledge/FilterBar';
 import { KnowledgeList } from '@/components/knowledge/KnowledgeList';
 import { EntryDetailSheet } from '@/components/knowledge/EntryDetailSheet';
+import { AddEntryDialog } from '@/components/knowledge/AddEntryDialog';
 import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 const OffersPage = () => {
   const { entries, allEntries, filters, setFilters, stats } = useKnowledge('offer');
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const offerEntries = allEntries.filter(e => e.category === 'offer');
   const wonCount = offerEntries.filter(e => e.offerStatus === 'won').length;
@@ -28,6 +30,10 @@ const OffersPage = () => {
     { label: 'Win Rate', value: `${winRate}%`, icon: FileText, color: 'text-foreground' },
   ];
 
+  const handleEntryAdded = () => {
+    window.location.reload();
+  };
+
   return (
     <MainLayout>
       <div className="p-6 max-w-7xl mx-auto fade-in">
@@ -36,6 +42,7 @@ const OffersPage = () => {
           description="Track proposals, tenders, and their outcomes"
           icon={<FileText className="w-5 h-5 text-category-offer" />}
           count={stats.total}
+          onAddClick={() => setShowAddDialog(true)}
         />
 
         {/* Offer stats */}
@@ -69,6 +76,13 @@ const OffersPage = () => {
           entry={selectedEntry}
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
+        />
+
+        <AddEntryDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onEntryAdded={handleEntryAdded}
+          defaultCategory="offer"
         />
       </div>
     </MainLayout>

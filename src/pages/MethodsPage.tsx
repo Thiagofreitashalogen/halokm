@@ -5,12 +5,18 @@ import { PageHeader } from '@/components/knowledge/PageHeader';
 import { FilterBar } from '@/components/knowledge/FilterBar';
 import { KnowledgeList } from '@/components/knowledge/KnowledgeList';
 import { EntryDetailSheet } from '@/components/knowledge/EntryDetailSheet';
+import { AddEntryDialog } from '@/components/knowledge/AddEntryDialog';
 import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
 
 const MethodsPage = () => {
   const { entries, filters, setFilters, stats } = useKnowledge('method');
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+
+  const handleEntryAdded = () => {
+    window.location.reload();
+  };
 
   return (
     <MainLayout>
@@ -20,6 +26,7 @@ const MethodsPage = () => {
           description="Reusable frameworks, processes, and design methodologies"
           icon={<Lightbulb className="w-5 h-5 text-category-method" />}
           count={stats.total}
+          onAddClick={() => setShowAddDialog(true)}
         />
 
         <FilterBar 
@@ -36,6 +43,13 @@ const MethodsPage = () => {
           entry={selectedEntry}
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
+        />
+
+        <AddEntryDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onEntryAdded={handleEntryAdded}
+          defaultCategory="method"
         />
       </div>
     </MainLayout>

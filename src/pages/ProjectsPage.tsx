@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/knowledge/PageHeader';
 import { FilterBar } from '@/components/knowledge/FilterBar';
 import { KnowledgeList } from '@/components/knowledge/KnowledgeList';
 import { EntryDetailSheet } from '@/components/knowledge/EntryDetailSheet';
-import { AddProjectDialog } from '@/components/knowledge/AddProjectDialog';
+import { AddEntryDialog } from '@/components/knowledge/AddEntryDialog';
 import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,10 +103,11 @@ const ProjectsPage = () => {
           onOpenChange={(open) => !open && setSelectedEntry(null)}
         />
 
-        <AddProjectDialog
+        <AddEntryDialog
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
-          onProjectAdded={fetchProjects}
+          onEntryAdded={fetchProjects}
+          defaultCategory="project"
         />
       </div>
     </MainLayout>
