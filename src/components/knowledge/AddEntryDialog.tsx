@@ -37,6 +37,8 @@ interface EntrySummary {
   // People specific
   studio?: string;
   position?: string;
+  // Client specific
+  industry?: string;
 }
 
 interface AddEntryDialogProps {
@@ -94,6 +96,7 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
     fullDescription: '',
     studio: '',
     position: '',
+    industry: '',
   });
 
   const resetDialog = () => {
@@ -292,6 +295,8 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
       } else if (summary.category === 'person') {
         insertData.studio = summary.studio || null;
         insertData.position = summary.position || null;
+      } else if (summary.category === 'client') {
+        insertData.industry = summary.industry || null;
       }
 
       const { data: entryData, error: entryError } = await supabase
@@ -632,6 +637,19 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
                     placeholder="e.g., Senior Designer"
                   />
                 </div>
+              </div>
+            )}
+
+            {/* Client specific: Industry */}
+            {summary.category === 'client' && (
+              <div className="space-y-2">
+                <Label htmlFor="industry">Industry</Label>
+                <Input
+                  id="industry"
+                  value={summary.industry || ''}
+                  onChange={(e) => updateSummary('industry', e.target.value)}
+                  placeholder="e.g., Healthcare, Finance, Technology"
+                />
               </div>
             )}
 
