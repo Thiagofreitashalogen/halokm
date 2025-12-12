@@ -88,12 +88,6 @@ export const sampleEntries: KnowledgeEntry[] = [
     createdAt: new Date('2023-05-10'),
     updatedAt: new Date('2024-08-01'),
     useCase: 'Use when client needs quick validation of product concepts or when exploring new directions.',
-    steps: [
-      'Day 1: Understand & Define - Stakeholder interviews, problem mapping',
-      'Day 2: Ideate & Decide - Sketching, voting, concept selection',
-      'Day 3: Prototype - High-fidelity prototype creation',
-      'Day 4: Test & Learn - User testing and synthesis'
-    ],
   },
   {
     id: '7',
@@ -104,12 +98,6 @@ export const sampleEntries: KnowledgeEntry[] = [
     createdAt: new Date('2023-02-15'),
     updatedAt: new Date('2024-06-20'),
     useCase: 'Apply during project kickoff and discovery phases to align on business goals and constraints.',
-    steps: [
-      'Prepare context questions based on industry research',
-      'Cover business goals, success metrics, constraints',
-      'Explore competitor landscape and differentiation',
-      'Document and synthesize findings within 24 hours'
-    ],
   },
   {
     id: '8',
@@ -120,13 +108,6 @@ export const sampleEntries: KnowledgeEntry[] = [
     createdAt: new Date('2023-08-20'),
     updatedAt: new Date('2024-04-10'),
     useCase: 'Best for complex service offerings with multiple touchpoints and stakeholders.',
-    steps: [
-      'Pre-workshop: Gather existing journey maps and data',
-      'Session 1: Map customer actions and frontstage interactions',
-      'Session 2: Map backstage processes and support systems',
-      'Session 3: Identify pain points and opportunities',
-      'Post-workshop: Synthesize and present recommendations'
-    ],
   },
 ];
 

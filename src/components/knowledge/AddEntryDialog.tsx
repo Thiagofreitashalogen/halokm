@@ -31,7 +31,6 @@ interface EntrySummary {
   referencesLinks?: string[];
   // Method specific
   useCases?: string[];
-  steps?: string[];
   field?: string;
   domain?: string;
   fullDescription?: string;
@@ -74,7 +73,6 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
   const [newMethod, setNewMethod] = useState('');
   const [newLearning, setNewLearning] = useState('');
   const [newUseCase, setNewUseCase] = useState('');
-  const [newStep, setNewStep] = useState('');
   const [newReference, setNewReference] = useState('');
 
   const getDefaultSummary = (): EntrySummary => ({
@@ -91,7 +89,6 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
     offerWorkStatus: 'under_development',
     referencesLinks: [],
     useCases: [],
-    steps: [],
     field: '',
     domain: '',
     fullDescription: '',
@@ -111,7 +108,6 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
     setNewMethod('');
     setNewLearning('');
     setNewUseCase('');
-    setNewStep('');
     setNewReference('');
   };
 
@@ -289,7 +285,6 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
         insertData.loss_reasons = summary.lossReasons || null;
       } else if (summary.category === 'method') {
         insertData.use_cases = summary.useCases || [];
-        insertData.steps = summary.steps || [];
         insertData.field = summary.field || null;
         insertData.domain = summary.domain || null;
         insertData.full_description = summary.fullDescription || null;
@@ -816,26 +811,15 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
 
             {/* Use Cases (methods) */}
             {summary.category === 'method' && (
-              <>
-                <ArrayField
-                  label="Use Cases"
-                  items={summary.useCases || []}
-                  onAdd={(value) => addToArray('useCases', value, setNewUseCase)}
-                  onRemove={(index) => removeFromArray('useCases', index)}
-                  inputValue={newUseCase}
-                  setInputValue={setNewUseCase}
-                  placeholder="Add use case..."
-                />
-                <ArrayField
-                  label="Steps"
-                  items={summary.steps || []}
-                  onAdd={(value) => addToArray('steps', value, setNewStep)}
-                  onRemove={(index) => removeFromArray('steps', index)}
-                  inputValue={newStep}
-                  setInputValue={setNewStep}
-                  placeholder="Add step..."
-                />
-              </>
+              <ArrayField
+                label="Use Cases"
+                items={summary.useCases || []}
+                onAdd={(value) => addToArray('useCases', value, setNewUseCase)}
+                onRemove={(index) => removeFromArray('useCases', index)}
+                inputValue={newUseCase}
+                setInputValue={setNewUseCase}
+                placeholder="Add use case..."
+              />
             )}
 
             {/* References (projects, methods) */}

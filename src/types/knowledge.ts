@@ -36,7 +36,6 @@ export interface KnowledgeEntry {
   fullDescription?: string;
   useCase?: string;
   useCases?: string[];
-  steps?: string[];
   
   // People specific
   studio?: string;

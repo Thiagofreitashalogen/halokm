@@ -39,7 +39,6 @@ export type Database = {
           source_drive_link: string | null
           source_miro_link: string | null
           start_date: string | null
-          steps: string[] | null
           studio: string | null
           tags: string[] | null
           title: string
@@ -72,7 +71,6 @@ export type Database = {
           source_drive_link?: string | null
           source_miro_link?: string | null
           start_date?: string | null
-          steps?: string[] | null
           studio?: string | null
           tags?: string[] | null
           title: string
@@ -105,7 +103,6 @@ export type Database = {
           source_drive_link?: string | null
           source_miro_link?: string | null
           start_date?: string | null
-          steps?: string[] | null
           studio?: string | null
           tags?: string[] | null
           title?: string
