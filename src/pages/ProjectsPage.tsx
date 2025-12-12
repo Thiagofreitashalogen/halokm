@@ -101,6 +101,7 @@ const ProjectsPage = () => {
           entry={selectedEntry}
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
+          onEntryUpdated={fetchProjects}
         />
 
         <AddEntryDialog

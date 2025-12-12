@@ -76,6 +76,7 @@ const OffersPage = () => {
           entry={selectedEntry}
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
+          onEntryUpdated={handleEntryAdded}
         />
 
         <AddEntryDialog
