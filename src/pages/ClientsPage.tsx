@@ -91,10 +91,12 @@ const ClientsPage = () => {
           showCategoryFilter={false}
         />
 
-        <KnowledgeList
-          entries={filteredEntries}
-          onEntryClick={handleEntryClick}
-        />
+        <div className="mt-6">
+          <KnowledgeList
+            entries={filteredEntries}
+            onEntryClick={handleEntryClick}
+          />
+        </div>
 
         <EntryDetailSheet
           entry={selectedEntry}
