@@ -46,6 +46,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   const [linkedMethods, setLinkedMethods] = useState<{id: string; title: string}[]>([]);
   const [linkedProjectPeople, setLinkedProjectPeople] = useState<{id: string; title: string}[]>([]);
   
+  // Linked entities for offer view
+  const [linkedOfferMethods, setLinkedOfferMethods] = useState<{id: string; title: string}[]>([]);
+  const [linkedOfferPeople, setLinkedOfferPeople] = useState<{id: string; title: string}[]>([]);
+  
   // Edit state for client linked entities
   const [editLinkedProjectIds, setEditLinkedProjectIds] = useState<string[]>([]);
   const [editLinkedPeopleIds, setEditLinkedPeopleIds] = useState<string[]>([]);
@@ -53,6 +57,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   // Edit state for project linked entities
   const [editLinkedMethodIds, setEditLinkedMethodIds] = useState<string[]>([]);
   const [editLinkedProjectPeopleIds, setEditLinkedProjectPeopleIds] = useState<string[]>([]);
+  
+  // Edit state for offer linked entities
+  const [editLinkedOfferMethodIds, setEditLinkedOfferMethodIds] = useState<string[]>([]);
+  const [editLinkedOfferPeopleIds, setEditLinkedOfferPeopleIds] = useState<string[]>([]);
 
   // Fetch linked entities when viewing a client or project
   useEffect(() => {
@@ -132,6 +140,43 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           setLinkedProjectPeople([]);
         }
       }
+      
+      // Offer: fetch linked methods and people
+      if (entry.category === 'offer') {
+        // Fetch linked methods
+        const { data: methodLinks } = await supabase
+          .from('offer_method_links')
+          .select('method_id')
+          .eq('offer_id', entry.id);
+        
+        const methodIds = methodLinks?.map(l => l.method_id) || [];
+        if (methodIds.length > 0) {
+          const { data: methods } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', methodIds);
+          setLinkedOfferMethods(methods || []);
+        } else {
+          setLinkedOfferMethods([]);
+        }
+        
+        // Fetch linked people
+        const { data: peopleLinks } = await supabase
+          .from('offer_people_links')
+          .select('person_id')
+          .eq('offer_id', entry.id);
+        
+        const peopleIds = peopleLinks?.map(l => l.person_id) || [];
+        if (peopleIds.length > 0) {
+          const { data: people } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', peopleIds);
+          setLinkedOfferPeople(people || []);
+        } else {
+          setLinkedOfferPeople([]);
+        }
+      }
     };
     
     // Reset edit state when entry changes
@@ -139,6 +184,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setEditLinkedProjectPeopleIds([]);
     setEditLinkedProjectIds([]);
     setEditLinkedPeopleIds([]);
+    setEditLinkedOfferMethodIds([]);
+    setEditLinkedOfferPeopleIds([]);
     
     fetchLinkedEntities();
   }, [entry?.id]);
@@ -161,7 +208,15 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         setEditLinkedPeopleIds(linkedPeople.map(p => p.id));
       }
     }
-  }, [isEditing, linkedMethods, linkedProjectPeople, linkedProjects, linkedPeople, entry?.category]);
+    if (isEditing && entry?.category === 'offer') {
+      if (linkedOfferMethods.length > 0 && editLinkedOfferMethodIds.length === 0) {
+        setEditLinkedOfferMethodIds(linkedOfferMethods.map(m => m.id));
+      }
+      if (linkedOfferPeople.length > 0 && editLinkedOfferPeopleIds.length === 0) {
+        setEditLinkedOfferPeopleIds(linkedOfferPeople.map(p => p.id));
+      }
+    }
+  }, [isEditing, linkedMethods, linkedProjectPeople, linkedProjects, linkedPeople, linkedOfferMethods, linkedOfferPeople, entry?.category]);
 
   if (!entry) return null;
 
@@ -199,6 +254,11 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       setEditLinkedMethodIds(linkedMethods.map(m => m.id));
       setEditLinkedProjectPeopleIds(linkedProjectPeople.map(p => p.id));
     }
+    // Initialize linked entity IDs for offers
+    if (entry.category === 'offer') {
+      setEditLinkedOfferMethodIds(linkedOfferMethods.map(m => m.id));
+      setEditLinkedOfferPeopleIds(linkedOfferPeople.map(p => p.id));
+    }
     setIsEditing(true);
   };
 
@@ -213,6 +273,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setEditLinkedPeopleIds([]);
     setEditLinkedMethodIds([]);
     setEditLinkedProjectPeopleIds([]);
+    setEditLinkedOfferMethodIds([]);
+    setEditLinkedOfferPeopleIds([]);
   };
 
   const handleSave = async () => {
@@ -339,6 +401,41 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             .from('project_people_links')
             .insert({
               project_id: entry.id,
+              person_id: personId,
+            });
+        }
+      }
+
+      // Handle offer-method and offer-people linking
+      if (entry.category === 'offer') {
+        // Remove existing method links
+        await supabase
+          .from('offer_method_links')
+          .delete()
+          .eq('offer_id', entry.id);
+
+        // Add new method links
+        for (const methodId of editLinkedOfferMethodIds) {
+          await supabase
+            .from('offer_method_links')
+            .insert({
+              offer_id: entry.id,
+              method_id: methodId,
+            });
+        }
+
+        // Remove existing people links
+        await supabase
+          .from('offer_people_links')
+          .delete()
+          .eq('offer_id', entry.id);
+
+        // Add new people links
+        for (const personId of editLinkedOfferPeopleIds) {
+          await supabase
+            .from('offer_people_links')
+            .insert({
+              offer_id: entry.id,
               person_id: personId,
             });
         }
@@ -993,7 +1090,132 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             </div>
           )}
 
-          {/* Method specific: Field & Domain */}
+          {/* Offer specific: Linked Methods */}
+          {entry.category === 'offer' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Wrench className="w-4 h-4 text-category-method" />
+                Methods Used
+              </h4>
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editLinkedOfferMethodIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {editLinkedOfferMethodIds.map((methodId) => {
+                        const method = linkedOfferMethods.find(m => m.id === methodId);
+                        return (
+                          <Badge key={methodId} variant="secondary" className="font-normal flex items-center gap-1">
+                            {method?.title || 'Loading...'}
+                            <button
+                              type="button"
+                              onClick={() => setEditLinkedOfferMethodIds(ids => ids.filter(id => id !== methodId))}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <EntityAutocomplete
+                    category="method"
+                    value=""
+                    onChange={(_, entityId) => {
+                      if (entityId && !editLinkedOfferMethodIds.includes(entityId)) {
+                        setEditLinkedOfferMethodIds(ids => [...ids, entityId]);
+                        supabase
+                          .from('knowledge_entries')
+                          .select('id, title')
+                          .eq('id', entityId)
+                          .single()
+                          .then(({ data }) => {
+                            if (data) {
+                              setLinkedOfferMethods(prev => [...prev, data]);
+                            }
+                          });
+                      }
+                    }}
+                    placeholder="Search methods to link..."
+                  />
+                </div>
+              ) : linkedOfferMethods.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedOfferMethods.map((method) => (
+                    <Badge key={method.id} variant="secondary" className="font-normal">
+                      {method.title}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No methods linked</p>
+              )}
+            </div>
+          )}
+
+          {/* Offer specific: Linked People */}
+          {entry.category === 'offer' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-primary" />
+                People Involved
+              </h4>
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editLinkedOfferPeopleIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {editLinkedOfferPeopleIds.map((personId) => {
+                        const person = linkedOfferPeople.find(p => p.id === personId);
+                        return (
+                          <Badge key={personId} variant="secondary" className="font-normal flex items-center gap-1">
+                            {person?.title || 'Loading...'}
+                            <button
+                              type="button"
+                              onClick={() => setEditLinkedOfferPeopleIds(ids => ids.filter(id => id !== personId))}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <EntityAutocomplete
+                    category="person"
+                    value=""
+                    onChange={(_, entityId) => {
+                      if (entityId && !editLinkedOfferPeopleIds.includes(entityId)) {
+                        setEditLinkedOfferPeopleIds(ids => [...ids, entityId]);
+                        supabase
+                          .from('knowledge_entries')
+                          .select('id, title')
+                          .eq('id', entityId)
+                          .single()
+                          .then(({ data }) => {
+                            if (data) {
+                              setLinkedOfferPeople(prev => [...prev, data]);
+                            }
+                          });
+                      }
+                    }}
+                    placeholder="Search people to link..."
+                  />
+                </div>
+              ) : linkedOfferPeople.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedOfferPeople.map((person) => (
+                    <Badge key={person.id} variant="secondary" className="font-normal">
+                      {person.title}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No people linked</p>
+              )}
+            </div>
+          )}
+
           {entry.category === 'method' && (
             <div className="grid grid-cols-2 gap-4">
               <div>
