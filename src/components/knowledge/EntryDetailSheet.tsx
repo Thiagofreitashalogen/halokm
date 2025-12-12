@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink, FolderKanban, Users, Wrench } from 'lucide-react';
+import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink, FolderKanban, Users, Wrench, FileText, Tag, Briefcase, MapPin, Factory, BookOpen, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -623,7 +623,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           {/* Description - hide for clients */}
           {entry.category !== 'client' && (
             <div>
-              <h4 className="text-sm font-medium mb-2">Description</h4>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                Description
+              </h4>
               {isEditing ? (
                 <Textarea
                   value={editData.description || ''}
@@ -642,7 +645,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           {entry.category === 'person' && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h4 className="text-sm font-medium mb-2">Studio</h4>
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4 text-muted-foreground" />
+                  Studio
+                </h4>
                 {isEditing ? (
                   <Input
                     value={editData.studio || ''}
@@ -657,7 +663,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                 )}
               </div>
               <div>
-                <h4 className="text-sm font-medium mb-2">Position</h4>
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4 text-muted-foreground" />
+                  Position
+                </h4>
                 {isEditing ? (
                   <Input
                     value={editData.position || ''}
@@ -802,7 +811,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
 
           {entry.category === 'client' && (
             <div>
-              <h4 className="text-sm font-medium mb-2">Industry</h4>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Factory className="w-4 h-4 text-muted-foreground" />
+                Industry
+              </h4>
               {isEditing ? (
                 <Input
                   value={editData.industry || ''}
@@ -949,7 +961,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           {/* Tags - hide for clients */}
           {entry.category !== 'client' && (
             <div>
-              <h4 className="text-sm font-medium mb-2">Tags</h4>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Tag className="w-4 h-4 text-muted-foreground" />
+                Tags
+              </h4>
               {isEditing ? (
                 <EditableArrayField
                   items={editData.tags || []}
@@ -1219,7 +1234,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           {entry.category === 'method' && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h4 className="text-sm font-medium mb-2">Field</h4>
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  Field
+                </h4>
                 {isEditing ? (
                   <Input
                     value={editData.field || ''}
@@ -1234,7 +1252,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                 )}
               </div>
               <div>
-                <h4 className="text-sm font-medium mb-2">Domain</h4>
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                  <Target className="w-4 h-4 text-muted-foreground" />
+                  Domain
+                </h4>
                 {isEditing ? (
                   <Input
                     value={editData.domain || ''}
@@ -1254,7 +1275,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           {/* Method specific: Full Description */}
           {entry.category === 'method' && (
             <div>
-              <h4 className="text-sm font-medium mb-2">Full Description</h4>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <BookOpen className="w-4 h-4 text-muted-foreground" />
+                Full Description
+              </h4>
               {isEditing ? (
                 <Textarea
                   value={editData.fullDescription || ''}
@@ -1275,7 +1299,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           {/* Method specific: Use cases */}
           {(entry.category === 'method' || (entry.useCases && entry.useCases.length > 0)) && (
             <div>
-              <h4 className="text-sm font-medium mb-2">When to Use</h4>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Target className="w-4 h-4 text-muted-foreground" />
+                When to Use
+              </h4>
               {isEditing ? (
                 <EditableArrayField
                   items={editData.useCases || []}
