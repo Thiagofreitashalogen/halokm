@@ -104,8 +104,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           .select('method_id')
           .eq('project_id', entry.id);
         
-        if (methodLinks && methodLinks.length > 0) {
-          const methodIds = methodLinks.map(l => l.method_id);
+        const methodIds = methodLinks?.map(l => l.method_id) || [];
+        if (methodIds.length > 0) {
           const { data: methods } = await supabase
             .from('knowledge_entries')
             .select('id, title')
@@ -121,8 +121,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           .select('person_id')
           .eq('project_id', entry.id);
         
-        if (peopleLinks && peopleLinks.length > 0) {
-          const peopleIds = peopleLinks.map(l => l.person_id);
+        const peopleIds = peopleLinks?.map(l => l.person_id) || [];
+        if (peopleIds.length > 0) {
           const { data: people } = await supabase
             .from('knowledge_entries')
             .select('id, title')
@@ -134,8 +134,34 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       }
     };
     
+    // Reset edit state when entry changes
+    setEditLinkedMethodIds([]);
+    setEditLinkedProjectPeopleIds([]);
+    setEditLinkedProjectIds([]);
+    setEditLinkedPeopleIds([]);
+    
     fetchLinkedEntities();
-  }, [entry]);
+  }, [entry?.id]);
+
+  // Sync edit state when linked entities are loaded while already editing
+  useEffect(() => {
+    if (isEditing && entry?.category === 'project') {
+      if (linkedMethods.length > 0 && editLinkedMethodIds.length === 0) {
+        setEditLinkedMethodIds(linkedMethods.map(m => m.id));
+      }
+      if (linkedProjectPeople.length > 0 && editLinkedProjectPeopleIds.length === 0) {
+        setEditLinkedProjectPeopleIds(linkedProjectPeople.map(p => p.id));
+      }
+    }
+    if (isEditing && entry?.category === 'client') {
+      if (linkedProjects.length > 0 && editLinkedProjectIds.length === 0) {
+        setEditLinkedProjectIds(linkedProjects.map(p => p.id));
+      }
+      if (linkedPeople.length > 0 && editLinkedPeopleIds.length === 0) {
+        setEditLinkedPeopleIds(linkedPeople.map(p => p.id));
+      }
+    }
+  }, [isEditing, linkedMethods, linkedProjectPeople, linkedProjects, linkedPeople, entry?.category]);
 
   if (!entry) return null;
 
