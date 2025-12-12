@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { KnowledgeCategory } from '@/types/knowledge';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { EntityAutocomplete } from './EntityAutocomplete';
 
 interface EntrySummary {
   category: KnowledgeCategory;
@@ -403,11 +404,41 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
     setIsSaving(true);
 
     try {
+      // If creating a project or offer with a client name, ensure the client exists
+      let clientId: string | null = null;
+      if ((summary.category === 'project' || summary.category === 'offer') && summary.client?.trim()) {
+        // Check if client exists
+        const { data: existingClient } = await supabase
+          .from('knowledge_entries')
+          .select('id')
+          .eq('category', 'client')
+          .ilike('title', summary.client.trim())
+          .maybeSingle();
+
+        if (existingClient) {
+          clientId = existingClient.id;
+        } else {
+          // Create new client
+          const { data: newClient, error: clientError } = await supabase
+            .from('knowledge_entries')
+            .insert({
+              category: 'client' as const,
+              title: summary.client.trim(),
+              description: `Client created from ${summary.category}: ${summary.title}`,
+            } as any)
+            .select()
+            .single();
+
+          if (clientError) throw clientError;
+          clientId = newClient.id;
+        }
+      }
+
       const insertData: Record<string, any> = {
         category: summary.category,
         title: summary.title,
         description: summary.description,
-        client: summary.client,
+        client: summary.client, // Keep the string for display
         tags: summary.tags,
         learnings: summary.learnings,
         deliverables: summary.deliverables,
@@ -441,6 +472,16 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
         .single();
 
       if (entryError) throw entryError;
+
+      // Link project to client
+      if (summary.category === 'project' && clientId) {
+        await supabase
+          .from('project_client_links')
+          .insert({
+            project_id: entryData.id,
+            client_id: clientId,
+          });
+      }
 
       // If it's a project, link methods
       if (summary.category === 'project' && summary.methods.length > 0) {
@@ -798,11 +839,15 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
             {(summary.category === 'project' || summary.category === 'offer') && (
               <div className="space-y-2">
                 <Label>Client</Label>
-                <Input
+                <EntityAutocomplete
+                  category="client"
                   value={summary.client || ''}
-                  onChange={(e) => updateSummary('client', e.target.value)}
-                  placeholder="Client name"
+                  onChange={(value) => updateSummary('client', value)}
+                  placeholder="Search or create client..."
                 />
+                <p className="text-xs text-muted-foreground">
+                  Type to search existing clients or create a new one
+                </p>
               </div>
             )}
 
