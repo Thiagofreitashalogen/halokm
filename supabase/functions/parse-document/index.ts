@@ -1,9 +1,76 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { ZipReader, BlobReader, TextWriter } from "https://deno.land/x/zipjs@v2.7.32/index.js";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Extract text from DOCX (which is a ZIP file with XML content)
+async function parseDocx(file: Blob): Promise<string> {
+  console.log('Parsing DOCX file...');
+  
+  const zipReader = new ZipReader(new BlobReader(file));
+  const entries = await zipReader.getEntries();
+  
+  // Find the main document content
+  const documentEntry = entries.find(e => e.filename === 'word/document.xml');
+  if (!documentEntry) {
+    await zipReader.close();
+    throw new Error('Invalid DOCX: document.xml not found');
+  }
+  
+  const textWriter = new TextWriter();
+  const xmlContent = await documentEntry.getData!(textWriter);
+  await zipReader.close();
+  
+  // Extract text from XML, handling paragraphs and formatting
+  const textContent = extractTextFromDocxXml(xmlContent);
+  
+  return textContent;
+}
+
+function extractTextFromDocxXml(xml: string): string {
+  const lines: string[] = [];
+  
+  // Match paragraph elements
+  const paragraphRegex = /<w:p[^>]*>([\s\S]*?)<\/w:p>/g;
+  let paragraphMatch;
+  
+  while ((paragraphMatch = paragraphRegex.exec(xml)) !== null) {
+    const paragraphContent = paragraphMatch[1];
+    
+    // Check if it's a heading
+    const isHeading = /<w:pStyle[^>]*w:val="Heading/.test(paragraphContent);
+    
+    // Extract all text runs within the paragraph
+    const textRegex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+    let textMatch;
+    const textParts: string[] = [];
+    
+    while ((textMatch = textRegex.exec(paragraphContent)) !== null) {
+      textParts.push(textMatch[1]);
+    }
+    
+    const paragraphText = textParts.join('').trim();
+    
+    if (paragraphText) {
+      if (isHeading) {
+        lines.push(`# ${paragraphText}`);
+      } else {
+        lines.push(paragraphText);
+      }
+    }
+  }
+  
+  return lines.join('\n\n');
+}
+
+// Parse plain text files
+async function parseTextFile(file: Blob): Promise<string> {
+  console.log('Parsing text file...');
+  return await file.text();
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,11 +78,6 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
-
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const fileUrl = formData.get('fileUrl') as string;
@@ -25,101 +87,55 @@ serve(async (req) => {
       throw new Error('Either file or fileUrl is required');
     }
 
-    console.log('Parsing document:', { 
-      hasFile: !!file, 
-      fileUrl: fileUrl?.substring(0, 50),
-      fileName 
-    });
-
-    // Get file content as base64
-    let fileBase64: string;
-    let mimeType: string;
+    let fileBlob: Blob;
     let actualFileName: string;
+    let mimeType: string;
 
     if (file) {
-      const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      fileBase64 = btoa(String.fromCharCode(...uint8Array));
-      mimeType = file.type || 'application/octet-stream';
+      fileBlob = file;
       actualFileName = fileName || file.name;
+      mimeType = file.type;
     } else if (fileUrl) {
       console.log('Fetching file from URL...');
       const fileResponse = await fetch(fileUrl);
       if (!fileResponse.ok) {
         throw new Error(`Failed to fetch file from URL: ${fileResponse.status}`);
       }
-      const arrayBuffer = await fileResponse.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      fileBase64 = btoa(String.fromCharCode(...uint8Array));
-      mimeType = fileResponse.headers.get('content-type') || 'application/octet-stream';
+      fileBlob = await fileResponse.blob();
       actualFileName = fileName || 'document';
+      mimeType = fileResponse.headers.get('content-type') || 'application/octet-stream';
     } else {
       throw new Error('No file provided');
     }
 
-    console.log('Calling Lovable AI for document analysis...', { 
+    console.log('Parsing document:', { 
       fileName: actualFileName, 
       mimeType,
-      base64Length: fileBase64.length 
+      size: fileBlob.size 
     });
 
-    // Use Lovable AI to extract document content
-    const response = await fetch('https://api.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Extract and structure the complete text content from this document. Format the output as follows:
-                
-1. Use "# " for main titles/headings
-2. Use "## " for sub-headings  
-3. Use "• " for bullet points
-4. Preserve paragraph structure with blank lines between sections
-5. Extract any tables in a readable format
+    let textContent: string;
+    const extension = actualFileName.toLowerCase().split('.').pop();
 
-Provide ONLY the extracted text content, no commentary or explanation. Be thorough and include all text from the document.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${mimeType};base64,${fileBase64}`
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 16000,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Lovable AI error:', response.status, errorText);
-      throw new Error(`Lovable AI error: ${response.status} - ${errorText}`);
+    // Route to appropriate parser based on file type
+    if (extension === 'docx' || mimeType.includes('openxmlformats-officedocument.wordprocessingml')) {
+      textContent = await parseDocx(fileBlob);
+    } else if (extension === 'txt' || extension === 'md' || mimeType.startsWith('text/')) {
+      textContent = await parseTextFile(fileBlob);
+    } else {
+      // For unsupported formats, return a helpful message
+      throw new Error(`Unsupported file format: ${extension || mimeType}. Supported formats: DOCX, TXT, MD`);
     }
-
-    const result = await response.json();
-    const textContent = result.choices?.[0]?.message?.content || '';
     
     console.log('Extraction complete:', { 
       textLength: textContent.length,
       fileName: actualFileName
     });
 
-    // Extract metadata
     const metadata = {
       filename: actualFileName,
       filetype: mimeType,
-      page_count: 1, // Lovable AI processes as single content
+      page_count: 1,
       element_count: textContent.split('\n\n').filter((p: string) => p.trim()).length,
     };
 
