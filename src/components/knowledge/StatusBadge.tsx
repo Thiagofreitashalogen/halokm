@@ -29,19 +29,6 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     label: 'Delivered',
     className: 'bg-status-completed/10 text-status-completed border-status-completed/20',
   },
-  // Project status
-  active: {
-    label: 'Active',
-    className: 'bg-status-active/10 text-status-active border-status-active/20',
-  },
-  completed: {
-    label: 'Completed',
-    className: 'bg-status-completed/10 text-status-completed border-status-completed/20',
-  },
-  archived: {
-    label: 'Archived',
-    className: 'bg-muted text-muted-foreground border-border',
-  },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
