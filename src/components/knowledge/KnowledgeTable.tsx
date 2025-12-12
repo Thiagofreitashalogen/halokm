@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { KnowledgeEntry, KnowledgeCategory } from '@/types/knowledge';
 import { CategoryBadge } from './CategoryBadge';
 import { StatusBadge } from './StatusBadge';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useLinkedClientsForTable } from '@/hooks/useLinkedEntities';
 import {
   Table,
   TableBody,
@@ -11,6 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+
+interface LinkedEntity {
+  id: string;
+  title: string;
+}
 
 interface KnowledgeTableProps {
   entries: KnowledgeEntry[];
@@ -57,8 +64,12 @@ const getCategoryColumns = (category: KnowledgeCategory | null | undefined) => {
   }
 };
 
-// Get cell content based on category
-const getCellContent = (entry: KnowledgeEntry, column: 'col1' | 'col2') => {
+// Get cell content based on category - now accepts linkedClients map for dynamic lookup
+const getCellContent = (
+  entry: KnowledgeEntry, 
+  column: 'col1' | 'col2',
+  linkedClients: Record<string, LinkedEntity | null>
+) => {
   const category = entry.category;
   
   if (column === 'col1') {
@@ -80,7 +91,10 @@ const getCellContent = (entry: KnowledgeEntry, column: 'col1' | 'col2') => {
   } else {
     switch (category) {
       case 'project':
+        // Use linked client from junction table, fallback to text field for legacy data
+        return linkedClients[entry.id]?.title || entry.client || '—';
       case 'offer':
+        // For offers, still use text field until we add offer_client_links table
         return entry.client || '—';
       case 'method':
         return entry.domain || '—';
@@ -90,12 +104,25 @@ const getCellContent = (entry: KnowledgeEntry, column: 'col1' | 'col2') => {
       case 'person':
         return entry.studio || '—';
       default:
+        // For mixed view, check linked clients first for projects
+        if (entry.category === 'project' && linkedClients[entry.id]) {
+          return linkedClients[entry.id]?.title;
+        }
         return entry.client || entry.domain || entry.studio || '—';
     }
   }
 };
 
 export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelectionChange, category }: KnowledgeTableProps) {
+  // Prepare entries data for the linked clients hook
+  const entriesForLinking = useMemo(() => 
+    entries.map(e => ({ id: e.id, category: e.category })),
+    [entries]
+  );
+  
+  // Fetch linked clients for projects dynamically
+  const { linkedClients } = useLinkedClientsForTable(entriesForLinking);
+  
   const allSelected = entries.length > 0 && selectedIds.size === entries.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < entries.length;
 
@@ -179,10 +206,10 @@ export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelection
                 </TableCell>
               )}
               <TableCell className="text-muted-foreground">
-                {getCellContent(entry, 'col1')}
+                {getCellContent(entry, 'col1', linkedClients)}
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {getCellContent(entry, 'col2')}
+                {getCellContent(entry, 'col2', linkedClients)}
               </TableCell>
               <TableCell className="text-muted-foreground text-sm">
                 {format(entry.updatedAt, 'MMM d, yyyy')}
