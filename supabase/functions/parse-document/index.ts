@@ -80,10 +80,10 @@ async function parseWithUnstructured(file: Blob, fileName: string): Promise<stri
     throw new Error('UNSTRUCTURED_API_KEY is not configured. Please add it in settings.');
   }
 
-  // Check file size - Unstructured has limits and edge functions have timeouts
-  const maxSizeBytes = 10 * 1024 * 1024; // 10MB limit for reliable processing
+  // Check file size - edge functions have a 60s timeout
+  const maxSizeBytes = 50 * 1024 * 1024; // 50MB limit
   if (file.size > maxSizeBytes) {
-    throw new Error(`File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum supported size is 10MB. Please use a smaller file or compress the document.`);
+    throw new Error(`File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum supported size is 50MB.`);
   }
 
   console.log('Parsing with Unstructured.io API...', { fileSize: file.size, fileName });
