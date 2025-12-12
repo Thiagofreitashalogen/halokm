@@ -359,125 +359,120 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="max-w-xl">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="flex items-center gap-2 text-base">
             {step === 'input' && (
               <>
-                <Upload className="w-5 h-5" />
+                <Upload className="w-4 h-4" />
                 Add New Entry
               </>
             )}
             {step === 'processing' && (
               <>
-                <Sparkles className="w-5 h-5 animate-pulse" />
-                Analyzing Content...
+                <Sparkles className="w-4 h-4 animate-pulse" />
+                Analyzing...
               </>
             )}
             {step === 'review' && (
               <>
-                <FileText className="w-5 h-5" />
+                <FileText className="w-4 h-4" />
                 Review Entry
               </>
             )}
           </DialogTitle>
-          <DialogDescription>
-            {step === 'input' && 'Upload files, paste content, or enter links. AI will analyze and categorize the entry.'}
-            {step === 'processing' && 'AI is analyzing your content and extracting details.'}
-            {step === 'review' && 'Review and edit the extracted information before saving.'}
+          <DialogDescription className="text-xs">
+            {step === 'input' && 'Upload files, paste content, or enter links for AI analysis.'}
+            {step === 'processing' && 'AI is analyzing your content.'}
+            {step === 'review' && 'Review and edit before saving.'}
           </DialogDescription>
         </DialogHeader>
 
         {step === 'input' && (
-          <div className="space-y-4 mt-4">
-            {/* Drop Zone */}
+          <div className="space-y-3">
+            {/* Drop Zone - Compact */}
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={`
-                border-2 border-dashed rounded-lg p-8 text-center transition-colors
+                border-2 border-dashed rounded-lg p-4 text-center transition-colors
                 ${isDragOver 
                   ? 'border-primary bg-primary/5' 
                   : 'border-border hover:border-primary/50'
                 }
               `}
             >
-              <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground mb-2">
-                Drag and drop files here, or
-              </p>
-              <label>
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  accept=".txt,.md,.csv,.json,.doc,.docx,.pdf"
-                />
-                <Button variant="outline" size="sm" asChild>
-                  <span className="cursor-pointer">Browse Files</span>
-                </Button>
-              </label>
-              <p className="text-xs text-muted-foreground mt-2">
-                Supports .txt, .md, .csv, .json files
-              </p>
+              <div className="flex items-center justify-center gap-3">
+                <Upload className="w-6 h-6 text-muted-foreground" />
+                <div className="text-left">
+                  <p className="text-sm text-muted-foreground">
+                    Drag files here or{' '}
+                    <label className="text-primary hover:underline cursor-pointer">
+                      browse
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        accept=".txt,.md,.csv,.json,.doc,.docx,.pdf"
+                      />
+                    </label>
+                  </p>
+                  <p className="text-xs text-muted-foreground">.txt, .md, .csv, .json</p>
+                </div>
+              </div>
             </div>
 
             {/* Uploaded Files */}
             {uploadedFiles.length > 0 && (
-              <div className="space-y-2">
-                <Label>Uploaded Files</Label>
-                <div className="flex flex-wrap gap-2">
-                  {uploadedFiles.map((file, index) => (
-                    <Badge key={index} variant="secondary" className="gap-1 py-1.5">
-                      <File className="w-3 h-3" />
-                      {file.name}
-                      <X
-                        className="w-3 h-3 cursor-pointer hover:text-destructive ml-1"
-                        onClick={() => removeFile(index)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-1.5">
+                {uploadedFiles.map((file, index) => (
+                  <Badge key={index} variant="secondary" className="gap-1 py-1 text-xs">
+                    <File className="w-3 h-3" />
+                    {file.name}
+                    <X
+                      className="w-3 h-3 cursor-pointer hover:text-destructive ml-1"
+                      onClick={() => removeFile(index)}
+                    />
+                  </Badge>
+                ))}
               </div>
             )}
 
-            {/* Link Input */}
-            <div className="space-y-2">
-              <Label htmlFor="link-input" className="flex items-center gap-2">
-                <Link className="w-4 h-4" />
-                Links
+            {/* Link Input - Compact */}
+            <div className="space-y-1">
+              <Label htmlFor="link-input" className="text-xs flex items-center gap-1.5">
+                <Link className="w-3 h-3" />
+                Links (optional)
               </Label>
               <Input
                 id="link-input"
-                placeholder="Enter URLs (Google Drive, Miro, etc.)"
+                placeholder="Google Drive, Miro URLs..."
                 value={linkInput}
                 onChange={(e) => setLinkInput(e.target.value)}
+                className="h-8 text-sm"
               />
-              <p className="text-xs text-muted-foreground">
-                Note: Links are stored for reference. Paste the content below for AI analysis.
-              </p>
             </div>
 
-            {/* Content Paste Area */}
-            <div className="space-y-2">
-              <Label htmlFor="pasted-content">Paste Content</Label>
+            {/* Content Paste Area - Compact */}
+            <div className="space-y-1">
+              <Label htmlFor="pasted-content" className="text-xs">Paste Content</Label>
               <Textarea
                 id="pasted-content"
-                placeholder="Paste text content from documents, emails, or other sources..."
+                placeholder="Paste text from documents, emails, etc..."
                 value={pastedContent}
                 onChange={(e) => setPastedContent(e.target.value)}
-                className="min-h-[150px] resize-none"
+                className="min-h-[100px] resize-none text-sm"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={handleClose}>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button onClick={handleProcess}>
-                <Sparkles className="w-4 h-4 mr-2" />
+              <Button size="sm" onClick={handleProcess}>
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                 Analyze with AI
               </Button>
             </div>
