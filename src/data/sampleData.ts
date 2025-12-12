@@ -10,7 +10,7 @@ export const sampleEntries: KnowledgeEntry[] = [
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-20'),
     client: 'TechCorp Inc.',
-    projectStatus: 'delivered',
+    projectStatus: 'completed',
     startDate: new Date('2024-01-15'),
     dateDelivered: new Date('2024-03-20'),
     learnings: [
@@ -29,7 +29,7 @@ export const sampleEntries: KnowledgeEntry[] = [
     createdAt: new Date('2023-09-01'),
     updatedAt: new Date('2024-02-28'),
     client: 'FinServ Bank',
-    projectStatus: 'delivered',
+    projectStatus: 'completed',
     startDate: new Date('2023-09-01'),
     dateDelivered: new Date('2024-02-28'),
     learnings: [
@@ -47,7 +47,7 @@ export const sampleEntries: KnowledgeEntry[] = [
     tags: ['sustainability', 'enterprise', 'platform design', 'proposal'],
     createdAt: new Date('2024-06-01'),
     updatedAt: new Date('2024-06-15'),
-    offerOutcome: 'won',
+    offerStatus: 'won',
     offerWorkStatus: 'delivered',
     dateDelivered: new Date('2024-06-10'),
     client: 'GreenCorp Industries',
@@ -61,7 +61,7 @@ export const sampleEntries: KnowledgeEntry[] = [
     tags: ['e-commerce', 'retail', 'redesign', 'RFP'],
     createdAt: new Date('2024-04-10'),
     updatedAt: new Date('2024-05-01'),
-    offerOutcome: 'lost',
+    offerStatus: 'lost',
     offerWorkStatus: 'delivered',
     dateDelivered: new Date('2024-04-25'),
     client: 'RetailMax',
@@ -75,7 +75,7 @@ export const sampleEntries: KnowledgeEntry[] = [
     tags: ['healthcare', 'patient portal', 'accessibility', 'UX'],
     createdAt: new Date('2024-07-20'),
     updatedAt: new Date('2024-07-20'),
-    offerOutcome: 'pending',
+    offerStatus: 'pending',
     offerWorkStatus: 'under_development',
     client: 'Regional Health Network',
   },
@@ -87,7 +87,7 @@ export const sampleEntries: KnowledgeEntry[] = [
     tags: ['workshop', 'rapid prototyping', 'methodology', 'innovation'],
     createdAt: new Date('2023-05-10'),
     updatedAt: new Date('2024-08-01'),
-    useCase: 'Use when client needs quick validation of product concepts or when exploring new directions.',
+    useCases: ['Use when client needs quick validation of product concepts or when exploring new directions.'],
   },
   {
     id: '7',
@@ -97,7 +97,7 @@ export const sampleEntries: KnowledgeEntry[] = [
     tags: ['research', 'interviews', 'discovery', 'template'],
     createdAt: new Date('2023-02-15'),
     updatedAt: new Date('2024-06-20'),
-    useCase: 'Apply during project kickoff and discovery phases to align on business goals and constraints.',
+    useCases: ['Apply during project kickoff and discovery phases to align on business goals and constraints.'],
   },
   {
     id: '8',
@@ -107,7 +107,7 @@ export const sampleEntries: KnowledgeEntry[] = [
     tags: ['service design', 'workshop', 'mapping', 'collaboration'],
     createdAt: new Date('2023-08-20'),
     updatedAt: new Date('2024-04-10'),
-    useCase: 'Best for complex service offerings with multiple touchpoints and stakeholders.',
+    useCases: ['Best for complex service offerings with multiple touchpoints and stakeholders.'],
   },
 ];
 

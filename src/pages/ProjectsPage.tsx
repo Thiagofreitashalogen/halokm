@@ -42,7 +42,7 @@ const ProjectsPage = () => {
         title: entry.title,
         description: entry.description || '',
         category: entry.category as 'project',
-        projectStatus: entry.project_status as 'under_development' | 'delivered' | undefined,
+        projectStatus: entry.project_status as 'active' | 'completed' | 'archived' | undefined,
         client: entry.client || undefined,
         tags: entry.tags || [],
         learnings: entry.learnings || [],

@@ -1,24 +1,79 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { KnowledgeEntry, FilterState, KnowledgeCategory } from '@/types/knowledge';
-import { sampleEntries } from '@/data/sampleData';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useKnowledge(categoryFilter?: KnowledgeCategory) {
-  const [entries] = useState<KnowledgeEntry[]>(sampleEntries);
+  const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     categories: categoryFilter ? [categoryFilter] : [],
     tags: [],
   });
 
+  // Fetch entries from Supabase
+  useEffect(() => {
+    const fetchEntries = async () => {
+      setIsLoading(true);
+      try {
+        let query = supabase
+          .from('knowledge_entries')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (categoryFilter) {
+          query = query.eq('category', categoryFilter);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        const mapped: KnowledgeEntry[] = (data || []).map((row) => ({
+          id: row.id,
+          title: row.title,
+          category: row.category as KnowledgeCategory,
+          description: row.description || '',
+          tags: row.tags || [],
+          createdAt: new Date(row.created_at),
+          updatedAt: new Date(row.updated_at),
+          client: row.client || undefined,
+          projectStatus: row.project_status || undefined,
+          offerStatus: row.offer_status || undefined,
+          offerWorkStatus: row.offer_work_status || undefined,
+          startDate: row.start_date ? new Date(row.start_date) : undefined,
+          dateDelivered: row.date_delivered ? new Date(row.date_delivered) : undefined,
+          deliverables: row.deliverables || undefined,
+          learnings: row.learnings || undefined,
+          referencesLinks: row.references_links || undefined,
+          sourceDriveLink: row.source_drive_link || undefined,
+          sourceMiroLink: row.source_miro_link || undefined,
+          winFactors: row.win_factors || undefined,
+          lossFactors: row.loss_factors || undefined,
+          winningStrategy: row.winning_strategy || undefined,
+          lossReasons: row.loss_reasons || undefined,
+          useCases: row.use_cases || undefined,
+          fullDescription: row.full_description || undefined,
+          field: row.field || undefined,
+          domain: row.domain || undefined,
+          industry: row.industry || undefined,
+          studio: row.studio || undefined,
+          position: row.position || undefined,
+        }));
+
+        setEntries(mapped);
+      } catch (error) {
+        console.error('Error fetching entries:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEntries();
+  }, [categoryFilter]);
+
   const filteredEntries = useMemo(() => {
     let result = entries;
-
-    // Filter by category (from prop or filters)
-    if (categoryFilter) {
-      result = result.filter((entry) => entry.category === categoryFilter);
-    } else if (filters.categories.length > 0) {
-      result = result.filter((entry) => filters.categories.includes(entry.category));
-    }
 
     // Filter by search
     if (filters.search) {
@@ -45,22 +100,24 @@ export function useKnowledge(categoryFilter?: KnowledgeCategory) {
     );
 
     return result;
-  }, [entries, filters, categoryFilter]);
+  }, [entries, filters]);
 
   const stats = useMemo(() => {
-    const all = categoryFilter 
-      ? entries.filter(e => e.category === categoryFilter)
-      : entries;
-    
     return {
-      total: all.length,
+      total: entries.length,
       projects: entries.filter((e) => e.category === 'project').length,
       offers: entries.filter((e) => e.category === 'offer').length,
       methods: entries.filter((e) => e.category === 'method').length,
-      wonOffers: entries.filter((e) => e.offerOutcome === 'won').length,
-      lostOffers: entries.filter((e) => e.offerOutcome === 'lost').length,
+      wonOffers: entries.filter((e) => e.offerStatus === 'won').length,
+      lostOffers: entries.filter((e) => e.offerStatus === 'lost').length,
     };
-  }, [entries, categoryFilter]);
+  }, [entries]);
+
+  const refetch = () => {
+    // Trigger a refetch by changing a dependency
+    setEntries([]);
+    setIsLoading(true);
+  };
 
   return {
     entries: filteredEntries,
@@ -68,5 +125,7 @@ export function useKnowledge(categoryFilter?: KnowledgeCategory) {
     filters,
     setFilters,
     stats,
+    isLoading,
+    refetch,
   };
 }

@@ -1,8 +1,8 @@
 export type KnowledgeCategory = 'project' | 'offer' | 'method' | 'client' | 'person';
 
-export type OfferOutcome = 'won' | 'lost' | 'pending';
+export type OfferStatus = 'draft' | 'pending' | 'won' | 'lost';
 export type OfferWorkStatus = 'under_development' | 'delivered';
-export type ProjectStatus = 'under_development' | 'delivered';
+export type ProjectStatus = 'active' | 'completed' | 'archived';
 
 export interface KnowledgeEntry {
   id: string;
@@ -25,10 +25,14 @@ export interface KnowledgeEntry {
   methodsUsed?: string[]; // IDs of method entries
   
   // Offer specific
-  offerOutcome?: OfferOutcome;
+  offerStatus?: OfferStatus;
   offerWorkStatus?: OfferWorkStatus;
   winningStrategy?: string;
   lossReasons?: string;
+  winFactors?: string[];
+  lossFactors?: string[];
+  sourceDriveLink?: string;
+  sourceMiroLink?: string;
   
   // Method/Tool specific
   field?: string;

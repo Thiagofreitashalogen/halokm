@@ -165,7 +165,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
 
   if (!entry) return null;
 
-  const status = entry.offerOutcome || entry.projectStatus;
+  const status = entry.offerStatus || entry.projectStatus;
 
   const startEditing = () => {
     setEditData({
@@ -180,7 +180,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       lossReasons: entry.lossReasons || '',
       useCases: [...(entry.useCases || [])],
       projectStatus: entry.projectStatus,
-      offerOutcome: entry.offerOutcome,
+      offerStatus: entry.offerStatus,
       offerWorkStatus: entry.offerWorkStatus,
       field: entry.field || '',
       domain: entry.domain || '',
@@ -231,7 +231,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         updateData.project_status = editData.projectStatus;
         updateData.references_links = editData.referencesLinks || [];
       } else if (entry.category === 'offer') {
-        updateData.offer_status = editData.offerOutcome;
+        updateData.offer_status = editData.offerStatus;
         updateData.offer_work_status = editData.offerWorkStatus;
         updateData.winning_strategy = editData.winningStrategy || null;
         updateData.loss_reasons = editData.lossReasons || null;
@@ -427,8 +427,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                     </SelectContent>
                   </Select>
                   <Select
-                    value={editData.offerOutcome || 'pending'}
-                    onValueChange={(value) => updateField('offerOutcome', value)}
+                    value={editData.offerStatus || 'pending'}
+                    onValueChange={(value) => updateField('offerStatus', value)}
                   >
                     <SelectTrigger className="h-7 w-24 text-xs">
                       <SelectValue />

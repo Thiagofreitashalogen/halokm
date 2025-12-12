@@ -55,8 +55,8 @@ export function KnowledgeTable({ entries, onEntryClick }: KnowledgeTableProps) {
                 {entry.projectStatus && (
                   <StatusBadge status={entry.projectStatus} />
                 )}
-                {entry.offerOutcome && (
-                  <StatusBadge status={entry.offerOutcome} />
+                {entry.offerStatus && (
+                  <StatusBadge status={entry.offerStatus} />
                 )}
               </TableCell>
               <TableCell className="text-muted-foreground">
