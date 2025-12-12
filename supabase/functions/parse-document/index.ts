@@ -11,9 +11,9 @@ serve(async (req) => {
   }
 
   try {
-    const UNSTRUCTURED_API_KEY = Deno.env.get('UNSTRUCTURED_API_KEY');
-    if (!UNSTRUCTURED_API_KEY) {
-      throw new Error('UNSTRUCTURED_API_KEY is not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
     const formData = await req.formData();
@@ -31,80 +31,101 @@ serve(async (req) => {
       fileName 
     });
 
-    // Prepare form data for Unstructured API
-    const unstructuredFormData = new FormData();
-    
+    // Get file content as base64
+    let fileBase64: string;
+    let mimeType: string;
+    let actualFileName: string;
+
     if (file) {
-      unstructuredFormData.append('files', file, fileName || file.name);
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      fileBase64 = btoa(String.fromCharCode(...uint8Array));
+      mimeType = file.type || 'application/octet-stream';
+      actualFileName = fileName || file.name;
     } else if (fileUrl) {
-      // Fetch the file from URL first
+      console.log('Fetching file from URL...');
       const fileResponse = await fetch(fileUrl);
       if (!fileResponse.ok) {
         throw new Error(`Failed to fetch file from URL: ${fileResponse.status}`);
       }
-      const fileBlob = await fileResponse.blob();
-      unstructuredFormData.append('files', fileBlob, fileName || 'document');
+      const arrayBuffer = await fileResponse.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      fileBase64 = btoa(String.fromCharCode(...uint8Array));
+      mimeType = fileResponse.headers.get('content-type') || 'application/octet-stream';
+      actualFileName = fileName || 'document';
+    } else {
+      throw new Error('No file provided');
     }
 
-    // Set parsing strategy for better extraction
-    unstructuredFormData.append('strategy', 'auto');
-    unstructuredFormData.append('hi_res_model_name', 'yolox');
+    console.log('Calling Lovable AI for document analysis...', { 
+      fileName: actualFileName, 
+      mimeType,
+      base64Length: fileBase64.length 
+    });
 
-    console.log('Calling Unstructured API...');
-
-    const response = await fetch('https://api.unstructured.io/general/v0/general', {
+    // Use Lovable AI to extract document content
+    const response = await fetch('https://api.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'unstructured-api-key': UNSTRUCTURED_API_KEY,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      body: unstructuredFormData,
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `Extract and structure the complete text content from this document. Format the output as follows:
+                
+1. Use "# " for main titles/headings
+2. Use "## " for sub-headings  
+3. Use "• " for bullet points
+4. Preserve paragraph structure with blank lines between sections
+5. Extract any tables in a readable format
+
+Provide ONLY the extracted text content, no commentary or explanation. Be thorough and include all text from the document.`
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${mimeType};base64,${fileBase64}`
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 16000,
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Unstructured API error:', response.status, errorText);
-      throw new Error(`Unstructured API error: ${response.status} - ${errorText}`);
+      console.error('Lovable AI error:', response.status, errorText);
+      throw new Error(`Lovable AI error: ${response.status} - ${errorText}`);
     }
 
-    const elements = await response.json();
+    const result = await response.json();
+    const textContent = result.choices?.[0]?.message?.content || '';
     
-    console.log('Parsed elements count:', elements.length);
-
-    // Extract text content from elements
-    const textContent = elements
-      .map((element: any) => {
-        if (element.type === 'Title') {
-          return `# ${element.text}`;
-        } else if (element.type === 'NarrativeText' || element.type === 'UncategorizedText') {
-          return element.text;
-        } else if (element.type === 'ListItem') {
-          return `• ${element.text}`;
-        } else if (element.type === 'Table') {
-          return element.text || element.metadata?.text_as_html || '';
-        } else {
-          return element.text || '';
-        }
-      })
-      .filter((text: string) => text.trim())
-      .join('\n\n');
+    console.log('Extraction complete:', { 
+      textLength: textContent.length,
+      fileName: actualFileName
+    });
 
     // Extract metadata
     const metadata = {
-      filename: elements[0]?.metadata?.filename || fileName,
-      filetype: elements[0]?.metadata?.filetype,
-      page_count: new Set(elements.map((e: any) => e.metadata?.page_number).filter(Boolean)).size,
-      element_count: elements.length,
+      filename: actualFileName,
+      filetype: mimeType,
+      page_count: 1, // Lovable AI processes as single content
+      element_count: textContent.split('\n\n').filter((p: string) => p.trim()).length,
     };
-
-    console.log('Extraction complete:', { 
-      textLength: textContent.length, 
-      ...metadata 
-    });
 
     return new Response(JSON.stringify({ 
       content: textContent,
       metadata,
-      elements: elements.slice(0, 50) // Return first 50 elements for debugging
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
