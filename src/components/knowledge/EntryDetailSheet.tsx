@@ -460,6 +460,25 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             </div>
           )}
 
+          {/* Client specific: Industry */}
+          {entry.category === 'client' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Industry</h4>
+              {isEditing ? (
+                <Input
+                  value={editData.industry || ''}
+                  onChange={(e) => updateField('industry', e.target.value)}
+                  placeholder="e.g., Healthcare, Finance, Technology"
+                  className="h-8"
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {entry.industry || 'Not specified'}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Client specific: Linked Projects */}
           {entry.category === 'client' && (
             <div>
