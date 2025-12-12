@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, Link, FileText, X, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { EntityAutocomplete } from './EntityAutocomplete';
 
 interface ProjectSummary {
   title: string;
@@ -101,7 +102,36 @@ export const AddProjectDialog = ({ open, onOpenChange, onProjectAdded }: AddProj
     setIsSaving(true);
 
     try {
-      // First, save the project
+      // Ensure client exists if provided
+      let clientId: string | null = null;
+      if (summary.client?.trim()) {
+        const { data: existingClient } = await supabase
+          .from('knowledge_entries')
+          .select('id')
+          .eq('category', 'client')
+          .ilike('title', summary.client.trim())
+          .maybeSingle();
+
+        if (existingClient) {
+          clientId = existingClient.id;
+        } else {
+          // Create new client
+          const { data: newClient, error: clientError } = await supabase
+            .from('knowledge_entries')
+            .insert({
+              category: 'client' as const,
+              title: summary.client.trim(),
+              description: `Client created from project: ${summary.title}`,
+            })
+            .select()
+            .single();
+
+          if (clientError) throw clientError;
+          clientId = newClient.id;
+        }
+      }
+
+      // Save the project
       const { data: projectData, error: projectError } = await supabase
         .from('knowledge_entries')
         .insert({
@@ -118,6 +148,16 @@ export const AddProjectDialog = ({ open, onOpenChange, onProjectAdded }: AddProj
         .single();
 
       if (projectError) throw projectError;
+
+      // Link project to client
+      if (clientId) {
+        await supabase
+          .from('project_client_links')
+          .insert({
+            project_id: projectData.id,
+            client_id: clientId,
+          });
+      }
 
       // For each method, check if it exists or create it
       for (const methodName of summary.methods) {
@@ -287,12 +327,15 @@ export const AddProjectDialog = ({ open, onOpenChange, onProjectAdded }: AddProj
             {/* Client */}
             <div className="space-y-2">
               <Label htmlFor="client">Client</Label>
-              <Input
-                id="client"
+              <EntityAutocomplete
+                category="client"
                 value={summary.client || ''}
-                onChange={(e) => updateSummary('client', e.target.value || null)}
-                placeholder="Client name"
+                onChange={(value) => updateSummary('client', value || null)}
+                placeholder="Search or create client..."
               />
+              <p className="text-xs text-muted-foreground">
+                Type to search existing clients or create a new one
+              </p>
             </div>
 
             {/* Description */}
