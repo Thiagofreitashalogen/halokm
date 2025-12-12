@@ -156,16 +156,15 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               )}
               {isEditing && entry.category === 'project' && (
                 <Select
-                  value={editData.projectStatus || 'completed'}
+                  value={editData.projectStatus || 'under_development'}
                   onValueChange={(value) => updateField('projectStatus', value)}
                 >
-                  <SelectTrigger className="h-7 w-28 text-xs">
+                  <SelectTrigger className="h-7 w-36 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
+                    <SelectItem value="under_development">Under Development</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
                   </SelectContent>
                 </Select>
               )}

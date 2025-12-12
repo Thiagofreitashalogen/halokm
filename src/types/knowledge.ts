@@ -2,7 +2,7 @@ export type KnowledgeCategory = 'project' | 'offer' | 'method';
 
 export type OfferOutcome = 'won' | 'lost' | 'pending';
 export type OfferWorkStatus = 'under_development' | 'delivered';
-export type ProjectStatus = 'active' | 'completed' | 'archived';
+export type ProjectStatus = 'under_development' | 'delivered';
 
 export interface KnowledgeEntry {
   id: string;
@@ -17,18 +17,18 @@ export interface KnowledgeEntry {
   client?: string;
   projectStatus?: ProjectStatus;
   startDate?: Date;
-  endDate?: Date;
+  dateDelivered?: Date;
   learnings?: string[];
   deliverables?: string[];
+  referencesLinks?: string[];
+  peopleInvolved?: string[]; // IDs of people entries
+  methodsUsed?: string[]; // IDs of method entries
   
   // Offer specific
   offerOutcome?: OfferOutcome;
   offerWorkStatus?: OfferWorkStatus;
-  dateDelivered?: Date;
   winningStrategy?: string;
   lossReasons?: string;
-  peopleInvolved?: string[]; // IDs of people entries
-  methodsUsed?: string[]; // IDs of method entries
   
   // Method/Tool specific
   useCase?: string;

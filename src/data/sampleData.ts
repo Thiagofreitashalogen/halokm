@@ -10,14 +10,15 @@ export const sampleEntries: KnowledgeEntry[] = [
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-03-20'),
     client: 'TechCorp Inc.',
-    projectStatus: 'completed',
+    projectStatus: 'delivered',
     startDate: new Date('2024-01-15'),
-    endDate: new Date('2024-03-20'),
+    dateDelivered: new Date('2024-03-20'),
     learnings: [
       'Early stakeholder alignment saves significant revision time',
       'B2B tech clients respond well to data-driven design rationale',
       'Brand guidelines should include digital-first applications'
     ],
+    referencesLinks: ['https://drive.google.com/example1', 'https://miro.com/example1'],
   },
   {
     id: '2',
@@ -28,14 +29,15 @@ export const sampleEntries: KnowledgeEntry[] = [
     createdAt: new Date('2023-09-01'),
     updatedAt: new Date('2024-02-28'),
     client: 'FinServ Bank',
-    projectStatus: 'completed',
+    projectStatus: 'delivered',
     startDate: new Date('2023-09-01'),
-    endDate: new Date('2024-02-28'),
+    dateDelivered: new Date('2024-02-28'),
     learnings: [
       'Accessibility compliance should be built into the design process from day one',
       'Frequent user testing with real customers reduces late-stage pivots',
       'Design tokens enable faster handoff to development'
     ],
+    referencesLinks: [],
   },
   {
     id: '3',

@@ -31,8 +31,10 @@ export type Database = {
             | Database["public"]["Enums"]["offer_work_status"]
             | null
           project_status: Database["public"]["Enums"]["project_status"] | null
+          references_links: string[] | null
           source_drive_link: string | null
           source_miro_link: string | null
+          start_date: string | null
           steps: string[] | null
           tags: string[] | null
           title: string
@@ -57,8 +59,10 @@ export type Database = {
             | Database["public"]["Enums"]["offer_work_status"]
             | null
           project_status?: Database["public"]["Enums"]["project_status"] | null
+          references_links?: string[] | null
           source_drive_link?: string | null
           source_miro_link?: string | null
+          start_date?: string | null
           steps?: string[] | null
           tags?: string[] | null
           title: string
@@ -83,8 +87,10 @@ export type Database = {
             | Database["public"]["Enums"]["offer_work_status"]
             | null
           project_status?: Database["public"]["Enums"]["project_status"] | null
+          references_links?: string[] | null
           source_drive_link?: string | null
           source_miro_link?: string | null
+          start_date?: string | null
           steps?: string[] | null
           tags?: string[] | null
           title?: string
@@ -196,6 +202,42 @@ export type Database = {
           },
           {
             foreignKeyName: "project_method_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_people_links: {
+        Row: {
+          created_at: string
+          id: string
+          person_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          person_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          person_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_people_links_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_people_links_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "knowledge_entries"
