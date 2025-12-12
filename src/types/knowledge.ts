@@ -43,6 +43,10 @@ export interface KnowledgeEntry {
   clientIds?: string[]; // IDs of client entries
   expertiseMethodIds?: string[]; // IDs of method entries
   
+  // Client specific
+  industry?: string;
+  projectIds?: string[]; // IDs of project entries
+  
   // Common
   relatedEntries?: string[];
   attachments?: string[];

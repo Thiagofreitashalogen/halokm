@@ -61,6 +61,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       fullDescription: entry.fullDescription || '',
       studio: entry.studio || '',
       position: entry.position || '',
+      industry: entry.industry || '',
     });
     setIsEditing(true);
   };
@@ -103,6 +104,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       } else if (entry.category === 'person') {
         updateData.studio = editData.studio || null;
         updateData.position = editData.position || null;
+      } else if (entry.category === 'client') {
+        updateData.industry = editData.industry || null;
       }
 
       const { error } = await supabase
@@ -336,7 +339,25 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             </div>
           )}
 
-          {/* Tags */}
+          {/* Client specific: Industry */}
+          {entry.category === 'client' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Industry</h4>
+              {isEditing ? (
+                <Input
+                  value={editData.industry || ''}
+                  onChange={(e) => updateField('industry', e.target.value)}
+                  placeholder="e.g., Healthcare, Finance, Technology"
+                  className="h-8"
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {entry.industry || 'Not specified'}
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <h4 className="text-sm font-medium mb-2">Tags</h4>
             {isEditing ? (

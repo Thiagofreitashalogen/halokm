@@ -26,6 +26,7 @@ export type Database = {
           field: string | null
           full_description: string | null
           id: string
+          industry: string | null
           learnings: string[] | null
           loss_factors: string[] | null
           loss_reasons: string | null
@@ -58,6 +59,7 @@ export type Database = {
           field?: string | null
           full_description?: string | null
           id?: string
+          industry?: string | null
           learnings?: string[] | null
           loss_factors?: string[] | null
           loss_reasons?: string | null
@@ -90,6 +92,7 @@ export type Database = {
           field?: string | null
           full_description?: string | null
           id?: string
+          industry?: string | null
           learnings?: string[] | null
           loss_factors?: string[] | null
           loss_reasons?: string | null
@@ -256,6 +259,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      project_client_links: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          project_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          project_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+        }
+        Relationships: []
       }
       project_method_links: {
         Row: {
