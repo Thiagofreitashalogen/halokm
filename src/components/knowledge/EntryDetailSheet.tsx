@@ -61,6 +61,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       field: entry.field || '',
       domain: entry.domain || '',
       fullDescription: entry.fullDescription || '',
+      studio: entry.studio || '',
+      position: entry.position || '',
     });
     setIsEditing(true);
   };
@@ -102,6 +104,9 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         updateData.domain = editData.domain || null;
         updateData.full_description = editData.fullDescription || null;
         updateData.references_links = editData.referencesLinks || [];
+      } else if (entry.category === 'person') {
+        updateData.studio = editData.studio || null;
+        updateData.position = editData.position || null;
       }
 
       const { error } = await supabase
@@ -298,6 +303,42 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               </p>
             )}
           </div>
+
+          {/* People specific: Studio & Position */}
+          {entry.category === 'person' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-medium mb-2">Studio</h4>
+                {isEditing ? (
+                  <Input
+                    value={editData.studio || ''}
+                    onChange={(e) => updateField('studio', e.target.value)}
+                    placeholder="e.g., Design Studio A"
+                    className="h-8"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {entry.studio || 'Not specified'}
+                  </p>
+                )}
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-2">Position</h4>
+                {isEditing ? (
+                  <Input
+                    value={editData.position || ''}
+                    onChange={(e) => updateField('position', e.target.value)}
+                    placeholder="e.g., Senior Designer"
+                    className="h-8"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {entry.position || 'Not specified'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Tags */}
           <div>

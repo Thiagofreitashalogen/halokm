@@ -264,7 +264,7 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
 
       const { data: entryData, error: entryError } = await supabase
         .from('knowledge_entries')
-        .insert(insertData)
+        .insert(insertData as any)
         .select()
         .single();
 
