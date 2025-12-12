@@ -34,7 +34,6 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   const [editData, setEditData] = useState<Partial<KnowledgeEntry>>({});
   const [newTag, setNewTag] = useState('');
   const [newLearning, setNewLearning] = useState('');
-  const [newStep, setNewStep] = useState('');
   const [newUseCase, setNewUseCase] = useState('');
   const [newReference, setNewReference] = useState('');
 
@@ -53,7 +52,6 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       referencesLinks: [...(entry.referencesLinks || [])],
       winningStrategy: entry.winningStrategy || '',
       lossReasons: entry.lossReasons || '',
-      steps: [...(entry.steps || [])],
       useCases: [...(entry.useCases || [])],
       projectStatus: entry.projectStatus,
       offerOutcome: entry.offerOutcome,
@@ -72,7 +70,6 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setEditData({});
     setNewTag('');
     setNewLearning('');
-    setNewStep('');
     setNewUseCase('');
     setNewReference('');
   };
@@ -98,7 +95,6 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         updateData.winning_strategy = editData.winningStrategy || null;
         updateData.loss_reasons = editData.lossReasons || null;
       } else if (entry.category === 'method') {
-        updateData.steps = editData.steps || [];
         updateData.use_cases = editData.useCases || [];
         updateData.field = editData.field || null;
         updateData.domain = editData.domain || null;
@@ -571,36 +567,6 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             </div>
           )}
 
-          {/* Method specific: Steps */}
-          {(entry.category === 'method' || (entry.steps && entry.steps.length > 0)) && (
-            <div>
-              <h4 className="text-sm font-medium mb-2">Steps</h4>
-              {isEditing ? (
-                <EditableArrayField
-                  items={editData.steps || []}
-                  onAdd={(value) => addToArray('steps', value, setNewStep)}
-                  onRemove={(index) => removeFromArray('steps', index)}
-                  inputValue={newStep}
-                  setInputValue={setNewStep}
-                  placeholder="Add step..."
-                  numbered
-                />
-              ) : entry.steps && entry.steps.length > 0 ? (
-                <ol className="space-y-2">
-                  {entry.steps.map((step, idx) => (
-                    <li key={idx} className="text-sm text-muted-foreground flex items-start gap-3">
-                      <span className="text-xs font-medium bg-muted text-muted-foreground rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {idx + 1}
-                      </span>
-                      {step}
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="text-sm text-muted-foreground">No steps defined</p>
-              )}
-            </div>
-          )}
 
           {/* Method specific: References */}
           {entry.category === 'method' && (
