@@ -28,7 +28,7 @@ export function KnowledgeList({ entries, onEntryClick }: KnowledgeListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-1 -mt-2">
+      <div className="flex justify-end gap-1">
         <Toggle
           pressed={viewMode === 'cards'}
           onPressedChange={() => setViewMode('cards')}
