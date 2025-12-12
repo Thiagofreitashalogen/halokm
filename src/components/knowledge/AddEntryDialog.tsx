@@ -132,6 +132,38 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
     setIsDragOver(false);
   }, []);
 
+  const pollForJobCompletion = async (jobId: string): Promise<string> => {
+    const maxAttempts = 120; // 2 minutes max with 1 second intervals
+    let attempts = 0;
+    
+    while (attempts < maxAttempts) {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document?jobId=${jobId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data.status === 'completed') {
+        return data.content;
+      } else if (data.status === 'failed') {
+        throw new Error(data.error || 'Document processing failed');
+      }
+      
+      // Still processing, wait and retry
+      setProcessingStatus(`Processing document... (${attempts + 1}s)`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
+    }
+    
+    throw new Error('Document processing timed out. Please try a smaller file.');
+  };
+
   const parseDocumentWithUnstructured = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -154,6 +186,13 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
     }
 
     const data = await response.json();
+    
+    // Check if async processing was started
+    if (data.jobId) {
+      setProcessingStatus('Document queued for processing...');
+      return await pollForJobCompletion(data.jobId);
+    }
+    
     return data.content;
   };
 
