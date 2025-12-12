@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink, FolderKanban, Users } from 'lucide-react';
+import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink, FolderKanban, Users, Wrench } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,47 +42,95 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   const [linkedProjects, setLinkedProjects] = useState<{id: string; title: string}[]>([]);
   const [linkedPeople, setLinkedPeople] = useState<{id: string; title: string}[]>([]);
   
+  // Linked entities for project view
+  const [linkedMethods, setLinkedMethods] = useState<{id: string; title: string}[]>([]);
+  const [linkedProjectPeople, setLinkedProjectPeople] = useState<{id: string; title: string}[]>([]);
+  
   // Edit state for client linked entities
   const [editLinkedProjectIds, setEditLinkedProjectIds] = useState<string[]>([]);
   const [editLinkedPeopleIds, setEditLinkedPeopleIds] = useState<string[]>([]);
+  
+  // Edit state for project linked entities
+  const [editLinkedMethodIds, setEditLinkedMethodIds] = useState<string[]>([]);
+  const [editLinkedProjectPeopleIds, setEditLinkedProjectPeopleIds] = useState<string[]>([]);
 
-  // Fetch linked entities when viewing a client
+  // Fetch linked entities when viewing a client or project
   useEffect(() => {
     const fetchLinkedEntities = async () => {
-      if (!entry || entry.category !== 'client') return;
+      if (!entry) return;
       
-      // Fetch linked projects
-      const { data: projectLinks } = await supabase
-        .from('project_client_links')
-        .select('project_id')
-        .eq('client_id', entry.id);
-      
-      if (projectLinks && projectLinks.length > 0) {
-        const projectIds = projectLinks.map(l => l.project_id);
-        const { data: projects } = await supabase
-          .from('knowledge_entries')
-          .select('id, title')
-          .in('id', projectIds);
-        setLinkedProjects(projects || []);
-      } else {
-        setLinkedProjects([]);
+      // Client: fetch linked projects and people
+      if (entry.category === 'client') {
+        // Fetch linked projects
+        const { data: projectLinks } = await supabase
+          .from('project_client_links')
+          .select('project_id')
+          .eq('client_id', entry.id);
+        
+        if (projectLinks && projectLinks.length > 0) {
+          const projectIds = projectLinks.map(l => l.project_id);
+          const { data: projects } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', projectIds);
+          setLinkedProjects(projects || []);
+        } else {
+          setLinkedProjects([]);
+        }
+        
+        // Fetch linked people
+        const { data: peopleLinks } = await supabase
+          .from('people_client_links')
+          .select('person_id')
+          .eq('client_id', entry.id);
+        
+        if (peopleLinks && peopleLinks.length > 0) {
+          const peopleIds = peopleLinks.map(l => l.person_id);
+          const { data: people } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', peopleIds);
+          setLinkedPeople(people || []);
+        } else {
+          setLinkedPeople([]);
+        }
       }
       
-      // Fetch linked people
-      const { data: peopleLinks } = await supabase
-        .from('people_client_links')
-        .select('person_id')
-        .eq('client_id', entry.id);
-      
-      if (peopleLinks && peopleLinks.length > 0) {
-        const peopleIds = peopleLinks.map(l => l.person_id);
-        const { data: people } = await supabase
-          .from('knowledge_entries')
-          .select('id, title')
-          .in('id', peopleIds);
-        setLinkedPeople(people || []);
-      } else {
-        setLinkedPeople([]);
+      // Project: fetch linked methods and people
+      if (entry.category === 'project') {
+        // Fetch linked methods
+        const { data: methodLinks } = await supabase
+          .from('project_method_links')
+          .select('method_id')
+          .eq('project_id', entry.id);
+        
+        if (methodLinks && methodLinks.length > 0) {
+          const methodIds = methodLinks.map(l => l.method_id);
+          const { data: methods } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', methodIds);
+          setLinkedMethods(methods || []);
+        } else {
+          setLinkedMethods([]);
+        }
+        
+        // Fetch linked people
+        const { data: peopleLinks } = await supabase
+          .from('project_people_links')
+          .select('person_id')
+          .eq('project_id', entry.id);
+        
+        if (peopleLinks && peopleLinks.length > 0) {
+          const peopleIds = peopleLinks.map(l => l.person_id);
+          const { data: people } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', peopleIds);
+          setLinkedProjectPeople(people || []);
+        } else {
+          setLinkedProjectPeople([]);
+        }
       }
     };
     
@@ -120,6 +168,11 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       setEditLinkedProjectIds(linkedProjects.map(p => p.id));
       setEditLinkedPeopleIds(linkedPeople.map(p => p.id));
     }
+    // Initialize linked entity IDs for projects
+    if (entry.category === 'project') {
+      setEditLinkedMethodIds(linkedMethods.map(m => m.id));
+      setEditLinkedProjectPeopleIds(linkedProjectPeople.map(p => p.id));
+    }
     setIsEditing(true);
   };
 
@@ -132,6 +185,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setNewReference('');
     setEditLinkedProjectIds([]);
     setEditLinkedPeopleIds([]);
+    setEditLinkedMethodIds([]);
+    setEditLinkedProjectPeopleIds([]);
   };
 
   const handleSave = async () => {
@@ -224,6 +279,41 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             .insert({
               person_id: personId,
               client_id: entry.id,
+            });
+        }
+      }
+
+      // Handle project-method and project-people linking
+      if (entry.category === 'project') {
+        // Remove existing method links
+        await supabase
+          .from('project_method_links')
+          .delete()
+          .eq('project_id', entry.id);
+
+        // Add new method links
+        for (const methodId of editLinkedMethodIds) {
+          await supabase
+            .from('project_method_links')
+            .insert({
+              project_id: entry.id,
+              method_id: methodId,
+            });
+        }
+
+        // Remove existing people links
+        await supabase
+          .from('project_people_links')
+          .delete()
+          .eq('project_id', entry.id);
+
+        // Add new people links
+        for (const personId of editLinkedProjectPeopleIds) {
+          await supabase
+            .from('project_people_links')
+            .insert({
+              project_id: entry.id,
+              person_id: personId,
             });
         }
       }
@@ -460,7 +550,132 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             </div>
           )}
 
-          {/* Client specific: Industry */}
+          {/* Project specific: Linked Methods */}
+          {entry.category === 'project' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Wrench className="w-4 h-4 text-primary" />
+                Methods & Tools
+              </h4>
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editLinkedMethodIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {editLinkedMethodIds.map((methodId) => {
+                        const method = linkedMethods.find(m => m.id === methodId);
+                        return (
+                          <Badge key={methodId} variant="secondary" className="font-normal flex items-center gap-1">
+                            {method?.title || 'Loading...'}
+                            <button
+                              type="button"
+                              onClick={() => setEditLinkedMethodIds(ids => ids.filter(id => id !== methodId))}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <EntityAutocomplete
+                    category="method"
+                    value=""
+                    onChange={(_, entityId) => {
+                      if (entityId && !editLinkedMethodIds.includes(entityId)) {
+                        setEditLinkedMethodIds(ids => [...ids, entityId]);
+                        supabase
+                          .from('knowledge_entries')
+                          .select('id, title')
+                          .eq('id', entityId)
+                          .single()
+                          .then(({ data }) => {
+                            if (data) {
+                              setLinkedMethods(prev => [...prev, data]);
+                            }
+                          });
+                      }
+                    }}
+                    placeholder="Search methods to link..."
+                  />
+                </div>
+              ) : linkedMethods.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedMethods.map((method) => (
+                    <Badge key={method.id} variant="secondary" className="font-normal">
+                      {method.title}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No methods linked</p>
+              )}
+            </div>
+          )}
+
+          {/* Project specific: Linked People */}
+          {entry.category === 'project' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-primary" />
+                People Involved
+              </h4>
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editLinkedProjectPeopleIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {editLinkedProjectPeopleIds.map((personId) => {
+                        const person = linkedProjectPeople.find(p => p.id === personId);
+                        return (
+                          <Badge key={personId} variant="secondary" className="font-normal flex items-center gap-1">
+                            {person?.title || 'Loading...'}
+                            <button
+                              type="button"
+                              onClick={() => setEditLinkedProjectPeopleIds(ids => ids.filter(id => id !== personId))}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <EntityAutocomplete
+                    category="person"
+                    value=""
+                    onChange={(_, entityId) => {
+                      if (entityId && !editLinkedProjectPeopleIds.includes(entityId)) {
+                        setEditLinkedProjectPeopleIds(ids => [...ids, entityId]);
+                        supabase
+                          .from('knowledge_entries')
+                          .select('id, title')
+                          .eq('id', entityId)
+                          .single()
+                          .then(({ data }) => {
+                            if (data) {
+                              setLinkedProjectPeople(prev => [...prev, data]);
+                            }
+                          });
+                      }
+                    }}
+                    placeholder="Search people to link..."
+                  />
+                </div>
+              ) : linkedProjectPeople.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedProjectPeople.map((person) => (
+                    <Badge key={person.id} variant="secondary" className="font-normal">
+                      {person.title}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No people linked</p>
+              )}
+            </div>
+          )}
+
           {entry.category === 'client' && (
             <div>
               <h4 className="text-sm font-medium mb-2">Industry</h4>
