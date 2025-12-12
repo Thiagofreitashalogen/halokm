@@ -70,9 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       provider: 'google',
       options: {
         redirectTo: redirectUrl,
-        queryParams: {
-          hd: ALLOWED_DOMAIN, // Restricts to organization's domain in Google picker
-        },
       },
     });
 
