@@ -13,7 +13,7 @@ interface KnowledgeListProps {
 type ViewMode = 'cards' | 'table';
 
 export function KnowledgeList({ entries, onEntryClick }: KnowledgeListProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('cards');
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   if (entries.length === 0) {
     return (
