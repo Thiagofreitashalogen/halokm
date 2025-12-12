@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Building2, Calendar, DollarSign, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus } from 'lucide-react';
+import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,14 +34,12 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   const [editData, setEditData] = useState<Partial<KnowledgeEntry>>({});
   const [newTag, setNewTag] = useState('');
   const [newLearning, setNewLearning] = useState('');
-  const [newWinFactor, setNewWinFactor] = useState('');
-  const [newLossFactor, setNewLossFactor] = useState('');
   const [newStep, setNewStep] = useState('');
   const [newUseCase, setNewUseCase] = useState('');
 
   if (!entry) return null;
 
-  const status = entry.offerStatus || entry.projectStatus;
+  const status = entry.offerOutcome || entry.projectStatus;
 
   const startEditing = () => {
     setEditData({
@@ -51,12 +49,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       tags: [...(entry.tags || [])],
       learnings: [...(entry.learnings || [])],
       deliverables: [...(entry.deliverables || [])],
-      winFactors: [...(entry.winFactors || [])],
-      lossReasons: [...(entry.lossReasons || [])],
+      winningStrategy: entry.winningStrategy || '',
+      lossReasons: entry.lossReasons || '',
       steps: [...(entry.steps || [])],
       useCases: [...(entry.useCases || [])],
       projectStatus: entry.projectStatus,
-      offerStatus: entry.offerStatus,
+      offerOutcome: entry.offerOutcome,
+      offerWorkStatus: entry.offerWorkStatus,
     });
     setIsEditing(true);
   };
@@ -66,8 +65,6 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setEditData({});
     setNewTag('');
     setNewLearning('');
-    setNewWinFactor('');
-    setNewLossFactor('');
     setNewStep('');
     setNewUseCase('');
   };
@@ -87,9 +84,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       if (entry.category === 'project') {
         updateData.project_status = editData.projectStatus;
       } else if (entry.category === 'offer') {
-        updateData.offer_status = editData.offerStatus;
-        updateData.win_factors = editData.winFactors || [];
-        updateData.loss_factors = editData.lossReasons || [];
+        updateData.offer_status = editData.offerOutcome;
+        updateData.offer_work_status = editData.offerWorkStatus;
+        updateData.winning_strategy = editData.winningStrategy || null;
+        updateData.loss_reasons = editData.lossReasons || null;
       } else if (entry.category === 'method') {
         updateData.steps = editData.steps || [];
         updateData.use_cases = editData.useCases || [];
@@ -150,9 +148,12 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <CategoryBadge category={entry.category} />
               {!isEditing && status && <StatusBadge status={status} />}
+              {!isEditing && entry.offerWorkStatus && (
+                <StatusBadge status={entry.offerWorkStatus} />
+              )}
               {isEditing && entry.category === 'project' && (
                 <Select
                   value={editData.projectStatus || 'completed'}
@@ -169,20 +170,33 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                 </Select>
               )}
               {isEditing && entry.category === 'offer' && (
-                <Select
-                  value={editData.offerStatus || 'draft'}
-                  onValueChange={(value) => updateField('offerStatus', value)}
-                >
-                  <SelectTrigger className="h-7 w-24 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="won">Won</SelectItem>
-                    <SelectItem value="lost">Lost</SelectItem>
-                  </SelectContent>
-                </Select>
+                <>
+                  <Select
+                    value={editData.offerWorkStatus || 'under_development'}
+                    onValueChange={(value) => updateField('offerWorkStatus', value)}
+                  >
+                    <SelectTrigger className="h-7 w-36 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="under_development">Under Development</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={editData.offerOutcome || 'pending'}
+                    onValueChange={(value) => updateField('offerOutcome', value)}
+                  >
+                    <SelectTrigger className="h-7 w-24 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="won">Won</SelectItem>
+                      <SelectItem value="lost">Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </>
               )}
             </div>
             {!isEditing ? (
@@ -237,10 +251,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                     {entry.client}
                   </span>
                 )}
-                {entry.proposalValue && (
+                {entry.dateDelivered && (
                   <span className="flex items-center gap-1.5">
-                    <DollarSign className="w-4 h-4" />
-                    {entry.proposalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
+                    <Calendar className="w-4 h-4" />
+                    Delivered {format(entry.dateDelivered, 'MMM d, yyyy')}
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
@@ -325,62 +339,48 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             </div>
           )}
 
-          {/* Offer specific: Win factors */}
-          {(entry.category === 'offer' || (entry.winFactors && entry.winFactors.length > 0)) && (
+          {/* Offer specific: Winning Strategy */}
+          {entry.category === 'offer' && (
             <div>
               <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
                 <CheckCircle className="w-4 h-4 text-status-won" />
-                Win Factors
+                Winning Strategy
               </h4>
               {isEditing ? (
-                <EditableArrayField
-                  items={editData.winFactors || []}
-                  onAdd={(value) => addToArray('winFactors', value, setNewWinFactor)}
-                  onRemove={(index) => removeFromArray('winFactors', index)}
-                  inputValue={newWinFactor}
-                  setInputValue={setNewWinFactor}
-                  placeholder="Add win factor..."
+                <Textarea
+                  value={editData.winningStrategy || ''}
+                  onChange={(e) => updateField('winningStrategy', e.target.value)}
+                  className="min-h-[80px] resize-none"
+                  placeholder="Describe the winning strategy..."
                 />
-              ) : entry.winFactors && entry.winFactors.length > 0 ? (
-                <ul className="space-y-2">
-                  {entry.winFactors.map((factor, idx) => (
-                    <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-status-won mt-1">•</span>
-                      {factor}
-                    </li>
-                  ))}
-                </ul>
+              ) : entry.winningStrategy ? (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {entry.winningStrategy}
+                </p>
               ) : (
-                <p className="text-sm text-muted-foreground">No win factors recorded</p>
+                <p className="text-sm text-muted-foreground">No winning strategy recorded</p>
               )}
             </div>
           )}
 
-          {/* Offer specific: Loss reasons */}
-          {(entry.category === 'offer' || (entry.lossReasons && entry.lossReasons.length > 0)) && (
+          {/* Offer specific: Loss Reasons */}
+          {entry.category === 'offer' && (
             <div>
               <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
                 <XCircle className="w-4 h-4 text-status-lost" />
                 Loss Reasons
               </h4>
               {isEditing ? (
-                <EditableArrayField
-                  items={editData.lossReasons || []}
-                  onAdd={(value) => addToArray('lossReasons', value, setNewLossFactor)}
-                  onRemove={(index) => removeFromArray('lossReasons', index)}
-                  inputValue={newLossFactor}
-                  setInputValue={setNewLossFactor}
-                  placeholder="Add loss reason..."
+                <Textarea
+                  value={editData.lossReasons || ''}
+                  onChange={(e) => updateField('lossReasons', e.target.value)}
+                  className="min-h-[80px] resize-none"
+                  placeholder="Describe the reasons for losing..."
                 />
-              ) : entry.lossReasons && entry.lossReasons.length > 0 ? (
-                <ul className="space-y-2">
-                  {entry.lossReasons.map((reason, idx) => (
-                    <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-status-lost mt-1">•</span>
-                      {reason}
-                    </li>
-                  ))}
-                </ul>
+              ) : entry.lossReasons ? (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {entry.lossReasons}
+                </p>
               ) : (
                 <p className="text-sm text-muted-foreground">No loss reasons recorded</p>
               )}

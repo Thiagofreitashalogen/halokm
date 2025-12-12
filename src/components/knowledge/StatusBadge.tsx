@@ -1,12 +1,13 @@
 import { cn } from '@/lib/utils';
-import { OfferStatus, ProjectStatus } from '@/types/knowledge';
+import { OfferOutcome, OfferWorkStatus, ProjectStatus } from '@/types/knowledge';
 
 interface StatusBadgeProps {
-  status: OfferStatus | ProjectStatus;
+  status: OfferOutcome | OfferWorkStatus | ProjectStatus;
   className?: string;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; className: string }> = {
+  // Offer outcomes
   won: {
     label: 'Won',
     className: 'bg-status-won/10 text-status-won border-status-won/20',
@@ -19,6 +20,16 @@ const statusConfig = {
     label: 'Pending',
     className: 'bg-status-pending/10 text-status-pending border-status-pending/20',
   },
+  // Offer work status
+  under_development: {
+    label: 'Under Development',
+    className: 'bg-status-active/10 text-status-active border-status-active/20',
+  },
+  delivered: {
+    label: 'Delivered',
+    className: 'bg-status-completed/10 text-status-completed border-status-completed/20',
+  },
+  // Project status
   active: {
     label: 'Active',
     className: 'bg-status-active/10 text-status-active border-status-active/20',
@@ -27,10 +38,16 @@ const statusConfig = {
     label: 'Completed',
     className: 'bg-status-completed/10 text-status-completed border-status-completed/20',
   },
+  archived: {
+    label: 'Archived',
+    className: 'bg-muted text-muted-foreground border-border',
+  },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const config = statusConfig[status];
+  
+  if (!config) return null;
 
   return (
     <span

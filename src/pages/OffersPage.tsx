@@ -16,9 +16,9 @@ const OffersPage = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const offerEntries = allEntries.filter(e => e.category === 'offer');
-  const wonCount = offerEntries.filter(e => e.offerStatus === 'won').length;
-  const lostCount = offerEntries.filter(e => e.offerStatus === 'lost').length;
-  const pendingCount = offerEntries.filter(e => e.offerStatus === 'pending').length;
+  const wonCount = offerEntries.filter(e => e.offerOutcome === 'won').length;
+  const lostCount = offerEntries.filter(e => e.offerOutcome === 'lost').length;
+  const pendingCount = offerEntries.filter(e => e.offerOutcome === 'pending').length;
   const winRate = offerEntries.length > 0 
     ? Math.round((wonCount / (wonCount + lostCount)) * 100) 
     : 0;

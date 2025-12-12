@@ -45,14 +45,11 @@ export const sampleEntries: KnowledgeEntry[] = [
     tags: ['sustainability', 'enterprise', 'platform design', 'proposal'],
     createdAt: new Date('2024-06-01'),
     updatedAt: new Date('2024-06-15'),
-    offerStatus: 'won',
-    proposalValue: 180000,
+    offerOutcome: 'won',
+    offerWorkStatus: 'delivered',
+    dateDelivered: new Date('2024-06-10'),
     client: 'GreenCorp Industries',
-    winFactors: [
-      'Strong case studies in sustainability sector',
-      'Competitive pricing with clear deliverables',
-      'Team expertise highlighted in presentation'
-    ],
+    winningStrategy: 'Strong case studies in sustainability sector. Competitive pricing with clear deliverables. Team expertise highlighted in presentation.',
   },
   {
     id: '4',
@@ -62,14 +59,11 @@ export const sampleEntries: KnowledgeEntry[] = [
     tags: ['e-commerce', 'retail', 'redesign', 'RFP'],
     createdAt: new Date('2024-04-10'),
     updatedAt: new Date('2024-05-01'),
-    offerStatus: 'lost',
-    proposalValue: 250000,
+    offerOutcome: 'lost',
+    offerWorkStatus: 'delivered',
+    dateDelivered: new Date('2024-04-25'),
     client: 'RetailMax',
-    lossReasons: [
-      'Competitor offered lower price',
-      'Client preferred agency with more retail-specific portfolio',
-      'Timeline proposed was longer than client expected'
-    ],
+    lossReasons: 'Competitor offered lower price. Client preferred agency with more retail-specific portfolio. Timeline proposed was longer than client expected.',
   },
   {
     id: '5',
@@ -79,8 +73,8 @@ export const sampleEntries: KnowledgeEntry[] = [
     tags: ['healthcare', 'patient portal', 'accessibility', 'UX'],
     createdAt: new Date('2024-07-20'),
     updatedAt: new Date('2024-07-20'),
-    offerStatus: 'pending',
-    proposalValue: 120000,
+    offerOutcome: 'pending',
+    offerWorkStatus: 'under_development',
     client: 'Regional Health Network',
   },
   {
