@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      document_parsing_jobs: {
+        Row: {
+          content: string | null
+          created_at: string
+          error: string | null
+          file_name: string
+          id: string
+          metadata: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          error?: string | null
+          file_name: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          error?: string | null
+          file_name?: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       knowledge_entries: {
         Row: {
           category: Database["public"]["Enums"]["knowledge_category"]

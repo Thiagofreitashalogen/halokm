@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ZipReader, BlobReader, TextWriter } from "https://deno.land/x/zipjs@v2.7.32/index.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+// Declare EdgeRuntime for TypeScript
+declare const EdgeRuntime: {
+  waitUntil: (promise: Promise<unknown>) => void;
+};
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -80,66 +86,132 @@ async function parseWithUnstructured(file: Blob, fileName: string): Promise<stri
     throw new Error('UNSTRUCTURED_API_KEY is not configured. Please add it in settings.');
   }
 
-  // Check file size - edge functions have a 60s timeout
-  const maxSizeBytes = 50 * 1024 * 1024; // 50MB limit
-  if (file.size > maxSizeBytes) {
-    throw new Error(`File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum supported size is 50MB.`);
-  }
-
   console.log('Parsing with Unstructured.io API...', { fileSize: file.size, fileName });
   
   const formData = new FormData();
   formData.append('files', new File([file], fileName));
   
-  // Create abort controller for timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 55000); // 55 second timeout (edge function limit is 60s)
+  // Use fast strategy for quicker processing
+  formData.append('strategy', 'fast');
+  
+  const response = await fetch('https://api.unstructuredapp.io/general/v0/general', {
+    method: 'POST',
+    headers: {
+      'unstructured-api-key': apiKey,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Unstructured API error:', { status: response.status, error: errorText });
+    throw new Error(`Unstructured API error: ${response.status} - ${errorText}`);
+  }
+
+  const elements = await response.json();
+  console.log(`Unstructured returned ${elements.length} elements`);
+  
+  // Convert elements to readable text
+  const textParts: string[] = [];
+  
+  for (const element of elements) {
+    if (element.type === 'Title') {
+      textParts.push(`# ${element.text}`);
+    } else if (element.type === 'Header') {
+      textParts.push(`## ${element.text}`);
+    } else if (element.type === 'ListItem') {
+      textParts.push(`• ${element.text}`);
+    } else if (element.text) {
+      textParts.push(element.text);
+    }
+  }
+  
+  return textParts.join('\n\n');
+}
+
+// Process document and update job status
+async function processDocumentInBackground(
+  jobId: string,
+  fileBlob: Blob,
+  actualFileName: string,
+  mimeType: string
+) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
   
   try {
-    const response = await fetch('https://api.unstructuredapp.io/general/v0/general', {
-      method: 'POST',
-      headers: {
-        'unstructured-api-key': apiKey,
-      },
-      body: formData,
-      signal: controller.signal,
+    console.log('Background processing started for job:', jobId);
+    
+    let textContent: string;
+    const extension = actualFileName.toLowerCase().split('.').pop();
+
+    // Route to appropriate parser based on file type
+    if (extension === 'txt' || extension === 'md' || mimeType.startsWith('text/')) {
+      textContent = await parseTextFile(fileBlob);
+    } else if (extension === 'docx' || mimeType.includes('openxmlformats-officedocument.wordprocessingml')) {
+      try {
+        textContent = await parseDocx(fileBlob);
+      } catch (docxError) {
+        console.log('Local DOCX parsing failed, trying Unstructured:', docxError);
+        textContent = await parseWithUnstructured(fileBlob, actualFileName);
+      }
+    } else if (
+      extension === 'pdf' || 
+      extension === 'pptx' || 
+      extension === 'ppt' ||
+      extension === 'xlsx' || 
+      extension === 'xls' ||
+      extension === 'doc' ||
+      mimeType.includes('pdf') ||
+      mimeType.includes('presentation') ||
+      mimeType.includes('spreadsheet') ||
+      mimeType.includes('msword')
+    ) {
+      textContent = await parseWithUnstructured(fileBlob, actualFileName);
+    } else {
+      console.log('Unknown format, attempting Unstructured API...');
+      textContent = await parseWithUnstructured(fileBlob, actualFileName);
+    }
+    
+    console.log('Background processing complete:', { 
+      jobId,
+      textLength: textContent.length,
+      fileName: actualFileName
     });
 
-    clearTimeout(timeoutId);
+    const metadata = {
+      filename: actualFileName,
+      filetype: mimeType,
+      page_count: 1,
+      element_count: textContent.split('\n\n').filter((p: string) => p.trim()).length,
+    };
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Unstructured API error:', { status: response.status, error: errorText });
-      throw new Error(`Unstructured API error: ${response.status} - ${errorText}`);
-    }
+    // Update job with results
+    const { error: updateError } = await supabase
+      .from('document_parsing_jobs')
+      .update({
+        status: 'completed',
+        content: textContent,
+        metadata: metadata,
+      })
+      .eq('id', jobId);
 
-    const elements = await response.json();
-    console.log(`Unstructured returned ${elements.length} elements`);
-    
-    // Convert elements to readable text
-    const textParts: string[] = [];
-    
-    for (const element of elements) {
-      if (element.type === 'Title') {
-        textParts.push(`# ${element.text}`);
-      } else if (element.type === 'Header') {
-        textParts.push(`## ${element.text}`);
-      } else if (element.type === 'ListItem') {
-        textParts.push(`• ${element.text}`);
-      } else if (element.text) {
-        textParts.push(element.text);
-      }
+    if (updateError) {
+      console.error('Failed to update job:', updateError);
     }
+  } catch (error) {
+    console.error('Background processing error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
-    return textParts.join('\n\n');
-  } catch (error: unknown) {
-    clearTimeout(timeoutId);
-    
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Document processing timed out. The file may be too complex or large. Try a smaller file.');
-    }
-    
-    throw error;
+    // Update job with error
+    await supabase
+      .from('document_parsing_jobs')
+      .update({
+        status: 'failed',
+        error: errorMessage,
+      })
+      .eq('id', jobId);
   }
 }
 
@@ -149,10 +221,60 @@ serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url);
+    
+    // Check if this is a status check request
+    if (url.searchParams.has('jobId')) {
+      const jobId = url.searchParams.get('jobId')!;
+      console.log('Checking status for job:', jobId);
+      
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const { data: job, error } = await supabase
+        .from('document_parsing_jobs')
+        .select('*')
+        .eq('id', jobId)
+        .single();
+      
+      if (error || !job) {
+        return new Response(JSON.stringify({ error: 'Job not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      if (job.status === 'completed') {
+        return new Response(JSON.stringify({
+          status: 'completed',
+          content: job.content,
+          metadata: job.metadata,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else if (job.status === 'failed') {
+        return new Response(JSON.stringify({
+          status: 'failed',
+          error: job.error,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else {
+        return new Response(JSON.stringify({
+          status: 'processing',
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Handle document upload
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const fileUrl = formData.get('fileUrl') as string;
     const fileName = formData.get('fileName') as string;
+    const async = formData.get('async') === 'true';
 
     if (!file && !fileUrl) {
       throw new Error('Either file or fileUrl is required');
@@ -179,21 +301,58 @@ serve(async (req) => {
       throw new Error('No file provided');
     }
 
-    console.log('Parsing document:', { 
+    console.log('Received document:', { 
       fileName: actualFileName, 
       mimeType,
-      size: fileBlob.size 
+      size: fileBlob.size,
+      async
     });
 
+    // For large files or when async is requested, use background processing
+    const isLargeFile = fileBlob.size > 5 * 1024 * 1024; // 5MB threshold
+    const useAsync = async || isLargeFile;
+    
+    if (useAsync) {
+      console.log('Using async processing for large file');
+      
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      // Create a job entry
+      const { data: job, error: jobError } = await supabase
+        .from('document_parsing_jobs')
+        .insert({
+          file_name: actualFileName,
+          status: 'processing',
+        })
+        .select()
+        .single();
+      
+      if (jobError || !job) {
+        throw new Error('Failed to create processing job');
+      }
+      
+      // Start background processing
+      EdgeRuntime.waitUntil(processDocumentInBackground(job.id, fileBlob, actualFileName, mimeType));
+      
+      // Return immediately with job ID
+      return new Response(JSON.stringify({ 
+        jobId: job.id,
+        status: 'processing',
+        message: 'Document is being processed. Poll for status using ?jobId=' + job.id
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // For small files, process synchronously
     let textContent: string;
     const extension = actualFileName.toLowerCase().split('.').pop();
 
-    // Route to appropriate parser based on file type
     if (extension === 'txt' || extension === 'md' || mimeType.startsWith('text/')) {
-      // Simple text files - parse locally
       textContent = await parseTextFile(fileBlob);
     } else if (extension === 'docx' || mimeType.includes('openxmlformats-officedocument.wordprocessingml')) {
-      // DOCX files - try local parsing first, fall back to Unstructured
       try {
         textContent = await parseDocx(fileBlob);
       } catch (docxError) {
@@ -212,10 +371,8 @@ serve(async (req) => {
       mimeType.includes('spreadsheet') ||
       mimeType.includes('msword')
     ) {
-      // Complex documents - use Unstructured API
       textContent = await parseWithUnstructured(fileBlob, actualFileName);
     } else {
-      // Try Unstructured for unknown formats
       console.log('Unknown format, attempting Unstructured API...');
       textContent = await parseWithUnstructured(fileBlob, actualFileName);
     }
@@ -246,4 +403,9 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+});
+
+// Handle shutdown gracefully
+addEventListener('beforeunload', (ev) => {
+  console.log('Function shutdown due to:', (ev as any).detail?.reason);
 });
