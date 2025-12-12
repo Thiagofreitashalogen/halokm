@@ -19,12 +19,17 @@ export type Database = {
           category: Database["public"]["Enums"]["knowledge_category"]
           client: string | null
           created_at: string
+          date_delivered: string | null
           deliverables: string[] | null
           description: string | null
           id: string
           learnings: string[] | null
           loss_factors: string[] | null
+          loss_reasons: string | null
           offer_status: Database["public"]["Enums"]["offer_status"] | null
+          offer_work_status:
+            | Database["public"]["Enums"]["offer_work_status"]
+            | null
           project_status: Database["public"]["Enums"]["project_status"] | null
           source_drive_link: string | null
           source_miro_link: string | null
@@ -34,17 +39,23 @@ export type Database = {
           updated_at: string
           use_cases: string[] | null
           win_factors: string[] | null
+          winning_strategy: string | null
         }
         Insert: {
           category: Database["public"]["Enums"]["knowledge_category"]
           client?: string | null
           created_at?: string
+          date_delivered?: string | null
           deliverables?: string[] | null
           description?: string | null
           id?: string
           learnings?: string[] | null
           loss_factors?: string[] | null
+          loss_reasons?: string | null
           offer_status?: Database["public"]["Enums"]["offer_status"] | null
+          offer_work_status?:
+            | Database["public"]["Enums"]["offer_work_status"]
+            | null
           project_status?: Database["public"]["Enums"]["project_status"] | null
           source_drive_link?: string | null
           source_miro_link?: string | null
@@ -54,17 +65,23 @@ export type Database = {
           updated_at?: string
           use_cases?: string[] | null
           win_factors?: string[] | null
+          winning_strategy?: string | null
         }
         Update: {
           category?: Database["public"]["Enums"]["knowledge_category"]
           client?: string | null
           created_at?: string
+          date_delivered?: string | null
           deliverables?: string[] | null
           description?: string | null
           id?: string
           learnings?: string[] | null
           loss_factors?: string[] | null
+          loss_reasons?: string | null
           offer_status?: Database["public"]["Enums"]["offer_status"] | null
+          offer_work_status?:
+            | Database["public"]["Enums"]["offer_work_status"]
+            | null
           project_status?: Database["public"]["Enums"]["project_status"] | null
           source_drive_link?: string | null
           source_miro_link?: string | null
@@ -74,8 +91,81 @@ export type Database = {
           updated_at?: string
           use_cases?: string[] | null
           win_factors?: string[] | null
+          winning_strategy?: string | null
         }
         Relationships: []
+      }
+      offer_method_links: {
+        Row: {
+          created_at: string
+          id: string
+          method_id: string
+          offer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          method_id: string
+          offer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          method_id?: string
+          offer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_method_links_method_id_fkey"
+            columns: ["method_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_method_links_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_people_links: {
+        Row: {
+          created_at: string
+          id: string
+          offer_id: string
+          person_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offer_id: string
+          person_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offer_id?: string
+          person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_people_links_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_people_links_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_method_links: {
         Row: {
@@ -123,6 +213,7 @@ export type Database = {
     Enums: {
       knowledge_category: "project" | "offer" | "method"
       offer_status: "draft" | "pending" | "won" | "lost"
+      offer_work_status: "under_development" | "delivered"
       project_status: "active" | "completed" | "archived"
     }
     CompositeTypes: {
@@ -253,6 +344,7 @@ export const Constants = {
     Enums: {
       knowledge_category: ["project", "offer", "method"],
       offer_status: ["draft", "pending", "won", "lost"],
+      offer_work_status: ["under_development", "delivered"],
       project_status: ["active", "completed", "archived"],
     },
   },

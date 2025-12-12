@@ -1,6 +1,7 @@
 export type KnowledgeCategory = 'project' | 'offer' | 'method';
 
-export type OfferStatus = 'won' | 'lost' | 'pending' | 'draft';
+export type OfferOutcome = 'won' | 'lost' | 'pending';
+export type OfferWorkStatus = 'under_development' | 'delivered';
 export type ProjectStatus = 'active' | 'completed' | 'archived';
 
 export interface KnowledgeEntry {
@@ -21,10 +22,13 @@ export interface KnowledgeEntry {
   deliverables?: string[];
   
   // Offer specific
-  offerStatus?: OfferStatus;
-  proposalValue?: number;
-  winFactors?: string[];
-  lossReasons?: string[];
+  offerOutcome?: OfferOutcome;
+  offerWorkStatus?: OfferWorkStatus;
+  dateDelivered?: Date;
+  winningStrategy?: string;
+  lossReasons?: string;
+  peopleInvolved?: string[]; // IDs of people entries
+  methodsUsed?: string[]; // IDs of method entries
   
   // Method/Tool specific
   useCase?: string;
