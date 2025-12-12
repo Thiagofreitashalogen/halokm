@@ -10,13 +10,9 @@ import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
 
 const MethodsPage = () => {
-  const { entries, filters, setFilters, stats } = useKnowledge('method');
+  const { entries, filters, setFilters, stats, refetch } = useKnowledge('method');
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
-
-  const handleEntryAdded = () => {
-    window.location.reload();
-  };
 
   return (
     <MainLayout>
@@ -36,20 +32,20 @@ const MethodsPage = () => {
         />
 
         <div className="mt-6">
-          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} />
+          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={refetch} />
         </div>
 
         <EntryDetailSheet
           entry={selectedEntry}
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
-          onEntryUpdated={handleEntryAdded}
+          onEntryUpdated={refetch}
         />
 
         <AddEntryDialog
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
-          onEntryAdded={handleEntryAdded}
+          onEntryAdded={refetch}
           defaultCategory="method"
         />
       </div>

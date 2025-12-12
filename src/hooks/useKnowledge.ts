@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 export function useKnowledge(categoryFilter?: KnowledgeCategory) {
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     categories: categoryFilter ? [categoryFilter] : [],
@@ -70,7 +71,7 @@ export function useKnowledge(categoryFilter?: KnowledgeCategory) {
     };
 
     fetchEntries();
-  }, [categoryFilter]);
+  }, [categoryFilter, refreshTrigger]);
 
   const filteredEntries = useMemo(() => {
     let result = entries;
@@ -114,9 +115,7 @@ export function useKnowledge(categoryFilter?: KnowledgeCategory) {
   }, [entries]);
 
   const refetch = () => {
-    // Trigger a refetch by changing a dependency
-    setEntries([]);
-    setIsLoading(true);
+    setRefreshTrigger(prev => prev + 1);
   };
 
   return {

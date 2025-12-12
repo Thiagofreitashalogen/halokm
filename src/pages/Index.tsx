@@ -11,7 +11,7 @@ import { KnowledgeEntry } from '@/types/knowledge';
 import { Card, CardContent } from '@/components/ui/card';
 
 const Index = () => {
-  const { entries, filters, setFilters, stats } = useKnowledge();
+  const { entries, filters, setFilters, stats, refetch } = useKnowledge();
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -22,11 +22,6 @@ const Index = () => {
     { label: 'Won', value: stats.wonOffers, icon: TrendingUp, color: 'text-status-won' },
     { label: 'Lost', value: stats.lostOffers, icon: TrendingDown, color: 'text-status-lost' },
   ];
-
-  const handleEntryAdded = () => {
-    // Refresh would happen via the useKnowledge hook in a full implementation
-    window.location.reload();
-  };
 
   return (
     <MainLayout>
@@ -59,20 +54,20 @@ const Index = () => {
         <FilterBar filters={filters} onFiltersChange={setFilters} />
 
         <div className="mt-6">
-          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} />
+          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={refetch} />
         </div>
 
         <EntryDetailSheet
           entry={selectedEntry}
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
-          onEntryUpdated={handleEntryAdded}
+          onEntryUpdated={refetch}
         />
 
         <AddEntryDialog
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
-          onEntryAdded={handleEntryAdded}
+          onEntryAdded={refetch}
         />
       </div>
     </MainLayout>

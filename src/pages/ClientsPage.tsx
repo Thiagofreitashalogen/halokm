@@ -95,6 +95,7 @@ const ClientsPage = () => {
           <KnowledgeList
             entries={filteredEntries}
             onEntryClick={handleEntryClick}
+            onEntriesDeleted={fetchEntries}
           />
         </div>
 

@@ -8,11 +8,12 @@ import { Toggle } from '@/components/ui/toggle';
 interface KnowledgeListProps {
   entries: KnowledgeEntry[];
   onEntryClick?: (entry: KnowledgeEntry) => void;
+  onEntriesDeleted?: () => void;
 }
 
 type ViewMode = 'cards' | 'table';
 
-export function KnowledgeList({ entries, onEntryClick }: KnowledgeListProps) {
+export function KnowledgeList({ entries, onEntryClick, onEntriesDeleted }: KnowledgeListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   if (entries.length === 0) {
@@ -58,7 +59,7 @@ export function KnowledgeList({ entries, onEntryClick }: KnowledgeListProps) {
           ))}
         </div>
       ) : (
-        <KnowledgeTable entries={entries} onEntryClick={onEntryClick} />
+        <KnowledgeTable entries={entries} onEntryClick={onEntryClick} onEntriesDeleted={onEntriesDeleted} />
       )}
     </div>
   );
