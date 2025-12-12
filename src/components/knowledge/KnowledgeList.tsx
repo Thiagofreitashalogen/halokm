@@ -1,12 +1,20 @@
+import { useState } from 'react';
+import { LayoutGrid, List } from 'lucide-react';
 import { KnowledgeEntry } from '@/types/knowledge';
 import { KnowledgeCard } from './KnowledgeCard';
+import { KnowledgeTable } from './KnowledgeTable';
+import { Toggle } from '@/components/ui/toggle';
 
 interface KnowledgeListProps {
   entries: KnowledgeEntry[];
   onEntryClick?: (entry: KnowledgeEntry) => void;
 }
 
+type ViewMode = 'cards' | 'table';
+
 export function KnowledgeList({ entries, onEntryClick }: KnowledgeListProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>('cards');
+
   if (entries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -19,14 +27,39 @@ export function KnowledgeList({ entries, onEntryClick }: KnowledgeListProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {entries.map((entry) => (
-        <KnowledgeCard
-          key={entry.id}
-          entry={entry}
-          onClick={() => onEntryClick?.(entry)}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="flex justify-end gap-1">
+        <Toggle
+          pressed={viewMode === 'cards'}
+          onPressedChange={() => setViewMode('cards')}
+          size="sm"
+          aria-label="Card view"
+        >
+          <LayoutGrid className="h-4 w-4" />
+        </Toggle>
+        <Toggle
+          pressed={viewMode === 'table'}
+          onPressedChange={() => setViewMode('table')}
+          size="sm"
+          aria-label="Table view"
+        >
+          <List className="h-4 w-4" />
+        </Toggle>
+      </div>
+
+      {viewMode === 'cards' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {entries.map((entry) => (
+            <KnowledgeCard
+              key={entry.id}
+              entry={entry}
+              onClick={() => onEntryClick?.(entry)}
+            />
+          ))}
+        </div>
+      ) : (
+        <KnowledgeTable entries={entries} onEntryClick={onEntryClick} />
+      )}
     </div>
   );
 }
