@@ -22,6 +22,9 @@ export type Database = {
           date_delivered: string | null
           deliverables: string[] | null
           description: string | null
+          domain: string | null
+          field: string | null
+          full_description: string | null
           id: string
           learnings: string[] | null
           loss_factors: string[] | null
@@ -50,6 +53,9 @@ export type Database = {
           date_delivered?: string | null
           deliverables?: string[] | null
           description?: string | null
+          domain?: string | null
+          field?: string | null
+          full_description?: string | null
           id?: string
           learnings?: string[] | null
           loss_factors?: string[] | null
@@ -78,6 +84,9 @@ export type Database = {
           date_delivered?: string | null
           deliverables?: string[] | null
           description?: string | null
+          domain?: string | null
+          field?: string | null
+          full_description?: string | null
           id?: string
           learnings?: string[] | null
           loss_factors?: string[] | null

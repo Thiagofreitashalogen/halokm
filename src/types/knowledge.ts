@@ -31,6 +31,9 @@ export interface KnowledgeEntry {
   lossReasons?: string;
   
   // Method/Tool specific
+  field?: string;
+  domain?: string;
+  fullDescription?: string;
   useCase?: string;
   useCases?: string[];
   steps?: string[];

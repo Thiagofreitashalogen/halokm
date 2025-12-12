@@ -58,6 +58,9 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       projectStatus: entry.projectStatus,
       offerOutcome: entry.offerOutcome,
       offerWorkStatus: entry.offerWorkStatus,
+      field: entry.field || '',
+      domain: entry.domain || '',
+      fullDescription: entry.fullDescription || '',
     });
     setIsEditing(true);
   };
@@ -95,6 +98,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       } else if (entry.category === 'method') {
         updateData.steps = editData.steps || [];
         updateData.use_cases = editData.useCases || [];
+        updateData.field = editData.field || null;
+        updateData.domain = editData.domain || null;
+        updateData.full_description = editData.fullDescription || null;
+        updateData.references_links = editData.referencesLinks || [];
       }
 
       const { error } = await supabase
@@ -434,6 +441,63 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             </div>
           )}
 
+          {/* Method specific: Field & Domain */}
+          {entry.category === 'method' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-medium mb-2">Field</h4>
+                {isEditing ? (
+                  <Input
+                    value={editData.field || ''}
+                    onChange={(e) => updateField('field', e.target.value)}
+                    placeholder="e.g., UX Design, Strategy"
+                    className="h-8"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {entry.field || 'Not specified'}
+                  </p>
+                )}
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-2">Domain</h4>
+                {isEditing ? (
+                  <Input
+                    value={editData.domain || ''}
+                    onChange={(e) => updateField('domain', e.target.value)}
+                    placeholder="e.g., Healthcare, Fintech"
+                    className="h-8"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {entry.domain || 'Not specified'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Method specific: Full Description */}
+          {entry.category === 'method' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Full Description</h4>
+              {isEditing ? (
+                <Textarea
+                  value={editData.fullDescription || ''}
+                  onChange={(e) => updateField('fullDescription', e.target.value)}
+                  className="min-h-[120px] resize-none"
+                  placeholder="Detailed description of the method..."
+                />
+              ) : entry.fullDescription ? (
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {entry.fullDescription}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">No full description provided</p>
+              )}
+            </div>
+          )}
+
           {/* Method specific: Use cases */}
           {(entry.category === 'method' || (entry.useCases && entry.useCases.length > 0)) && (
             <div>
@@ -493,6 +557,44 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                 </ol>
               ) : (
                 <p className="text-sm text-muted-foreground">No steps defined</p>
+              )}
+            </div>
+          )}
+
+          {/* Method specific: References */}
+          {entry.category === 'method' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Link2 className="w-4 h-4 text-primary" />
+                References
+              </h4>
+              {isEditing ? (
+                <EditableArrayField
+                  items={editData.referencesLinks || []}
+                  onAdd={(value) => addToArray('referencesLinks', value, setNewReference)}
+                  onRemove={(index) => removeFromArray('referencesLinks', index)}
+                  inputValue={newReference}
+                  setInputValue={setNewReference}
+                  placeholder="Add link (e.g., https://...)"
+                />
+              ) : entry.referencesLinks && entry.referencesLinks.length > 0 ? (
+                <ul className="space-y-2">
+                  {entry.referencesLinks.map((link, idx) => (
+                    <li key={idx} className="text-sm flex items-center gap-2">
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <a 
+                        href={link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline truncate"
+                      >
+                        {link}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No references added</p>
               )}
             </div>
           )}
