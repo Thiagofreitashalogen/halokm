@@ -41,6 +41,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   // Linked entities for client view
   const [linkedProjects, setLinkedProjects] = useState<{id: string; title: string}[]>([]);
   const [linkedPeople, setLinkedPeople] = useState<{id: string; title: string}[]>([]);
+  
+  // Edit state for client linked entities
+  const [editLinkedProjectIds, setEditLinkedProjectIds] = useState<string[]>([]);
+  const [editLinkedPeopleIds, setEditLinkedPeopleIds] = useState<string[]>([]);
 
   // Fetch linked entities when viewing a client
   useEffect(() => {
@@ -111,6 +115,11 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       position: entry.position || '',
       industry: entry.industry || '',
     });
+    // Initialize linked entity IDs for clients
+    if (entry.category === 'client') {
+      setEditLinkedProjectIds(linkedProjects.map(p => p.id));
+      setEditLinkedPeopleIds(linkedPeople.map(p => p.id));
+    }
     setIsEditing(true);
   };
 
@@ -121,6 +130,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setNewLearning('');
     setNewUseCase('');
     setNewReference('');
+    setEditLinkedProjectIds([]);
+    setEditLinkedPeopleIds([]);
   };
 
   const handleSave = async () => {
@@ -178,6 +189,41 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             .insert({
               project_id: entry.id,
               client_id: clientId,
+            });
+        }
+      }
+
+      // Handle client-project linking
+      if (entry.category === 'client') {
+        // Remove existing project links
+        await supabase
+          .from('project_client_links')
+          .delete()
+          .eq('client_id', entry.id);
+
+        // Add new project links
+        for (const projectId of editLinkedProjectIds) {
+          await supabase
+            .from('project_client_links')
+            .insert({
+              project_id: projectId,
+              client_id: entry.id,
+            });
+        }
+
+        // Remove existing people links
+        await supabase
+          .from('people_client_links')
+          .delete()
+          .eq('client_id', entry.id);
+
+        // Add new people links
+        for (const personId of editLinkedPeopleIds) {
+          await supabase
+            .from('people_client_links')
+            .insert({
+              person_id: personId,
+              client_id: entry.id,
             });
         }
       }
@@ -421,7 +467,50 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                 <FolderKanban className="w-4 h-4 text-primary" />
                 Projects
               </h4>
-              {linkedProjects.length > 0 ? (
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editLinkedProjectIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {editLinkedProjectIds.map((projectId) => {
+                        const project = linkedProjects.find(p => p.id === projectId);
+                        return (
+                          <Badge key={projectId} variant="secondary" className="font-normal flex items-center gap-1">
+                            {project?.title || 'Loading...'}
+                            <button
+                              type="button"
+                              onClick={() => setEditLinkedProjectIds(ids => ids.filter(id => id !== projectId))}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <EntityAutocomplete
+                    category="project"
+                    value=""
+                    onChange={(_, entityId) => {
+                      if (entityId && !editLinkedProjectIds.includes(entityId)) {
+                        setEditLinkedProjectIds(ids => [...ids, entityId]);
+                        // Also update linkedProjects for display
+                        supabase
+                          .from('knowledge_entries')
+                          .select('id, title')
+                          .eq('id', entityId)
+                          .single()
+                          .then(({ data }) => {
+                            if (data) {
+                              setLinkedProjects(prev => [...prev, data]);
+                            }
+                          });
+                      }
+                    }}
+                    placeholder="Search projects to link..."
+                  />
+                </div>
+              ) : linkedProjects.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedProjects.map((project) => (
                     <Badge key={project.id} variant="secondary" className="font-normal">
@@ -442,7 +531,50 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                 <Users className="w-4 h-4 text-primary" />
                 People Involved
               </h4>
-              {linkedPeople.length > 0 ? (
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editLinkedPeopleIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {editLinkedPeopleIds.map((personId) => {
+                        const person = linkedPeople.find(p => p.id === personId);
+                        return (
+                          <Badge key={personId} variant="secondary" className="font-normal flex items-center gap-1">
+                            {person?.title || 'Loading...'}
+                            <button
+                              type="button"
+                              onClick={() => setEditLinkedPeopleIds(ids => ids.filter(id => id !== personId))}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <EntityAutocomplete
+                    category="person"
+                    value=""
+                    onChange={(_, entityId) => {
+                      if (entityId && !editLinkedPeopleIds.includes(entityId)) {
+                        setEditLinkedPeopleIds(ids => [...ids, entityId]);
+                        // Also update linkedPeople for display
+                        supabase
+                          .from('knowledge_entries')
+                          .select('id, title')
+                          .eq('id', entityId)
+                          .single()
+                          .then(({ data }) => {
+                            if (data) {
+                              setLinkedPeople(prev => [...prev, data]);
+                            }
+                          });
+                      }
+                    }}
+                    placeholder="Search people to link..."
+                  />
+                </div>
+              ) : linkedPeople.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedPeople.map((person) => (
                     <Badge key={person.id} variant="secondary" className="font-normal">
