@@ -8,7 +8,7 @@ const corsHeaders = {
 
 // Extract text from DOCX (which is a ZIP file with XML content)
 async function parseDocx(file: Blob): Promise<string> {
-  console.log('Parsing DOCX file...');
+  console.log('Parsing DOCX file locally...');
   
   const zipReader = new ZipReader(new BlobReader(file));
   const entries = await zipReader.getEntries();
@@ -72,6 +72,54 @@ async function parseTextFile(file: Blob): Promise<string> {
   return await file.text();
 }
 
+// Parse complex documents using Unstructured.io API
+async function parseWithUnstructured(file: Blob, fileName: string): Promise<string> {
+  const apiKey = Deno.env.get('UNSTRUCTURED_API_KEY');
+  
+  if (!apiKey) {
+    throw new Error('UNSTRUCTURED_API_KEY is not configured. Please add it in settings.');
+  }
+
+  console.log('Parsing with Unstructured.io API...');
+  
+  const formData = new FormData();
+  formData.append('files', new File([file], fileName));
+  
+  const response = await fetch('https://api.unstructuredapp.io/general/v0/general', {
+    method: 'POST',
+    headers: {
+      'unstructured-api-key': apiKey,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Unstructured API error:', errorText);
+    throw new Error(`Unstructured API error: ${response.status} - ${errorText}`);
+  }
+
+  const elements = await response.json();
+  console.log(`Unstructured returned ${elements.length} elements`);
+  
+  // Convert elements to readable text
+  const textParts: string[] = [];
+  
+  for (const element of elements) {
+    if (element.type === 'Title') {
+      textParts.push(`# ${element.text}`);
+    } else if (element.type === 'Header') {
+      textParts.push(`## ${element.text}`);
+    } else if (element.type === 'ListItem') {
+      textParts.push(`• ${element.text}`);
+    } else if (element.text) {
+      textParts.push(element.text);
+    }
+  }
+  
+  return textParts.join('\n\n');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -118,13 +166,35 @@ serve(async (req) => {
     const extension = actualFileName.toLowerCase().split('.').pop();
 
     // Route to appropriate parser based on file type
-    if (extension === 'docx' || mimeType.includes('openxmlformats-officedocument.wordprocessingml')) {
-      textContent = await parseDocx(fileBlob);
-    } else if (extension === 'txt' || extension === 'md' || mimeType.startsWith('text/')) {
+    if (extension === 'txt' || extension === 'md' || mimeType.startsWith('text/')) {
+      // Simple text files - parse locally
       textContent = await parseTextFile(fileBlob);
+    } else if (extension === 'docx' || mimeType.includes('openxmlformats-officedocument.wordprocessingml')) {
+      // DOCX files - try local parsing first, fall back to Unstructured
+      try {
+        textContent = await parseDocx(fileBlob);
+      } catch (docxError) {
+        console.log('Local DOCX parsing failed, trying Unstructured:', docxError);
+        textContent = await parseWithUnstructured(fileBlob, actualFileName);
+      }
+    } else if (
+      extension === 'pdf' || 
+      extension === 'pptx' || 
+      extension === 'ppt' ||
+      extension === 'xlsx' || 
+      extension === 'xls' ||
+      extension === 'doc' ||
+      mimeType.includes('pdf') ||
+      mimeType.includes('presentation') ||
+      mimeType.includes('spreadsheet') ||
+      mimeType.includes('msword')
+    ) {
+      // Complex documents - use Unstructured API
+      textContent = await parseWithUnstructured(fileBlob, actualFileName);
     } else {
-      // For unsupported formats, return a helpful message
-      throw new Error(`Unsupported file format: ${extension || mimeType}. Supported formats: DOCX, TXT, MD`);
+      // Try Unstructured for unknown formats
+      console.log('Unknown format, attempting Unstructured API...');
+      textContent = await parseWithUnstructured(fileBlob, actualFileName);
     }
     
     console.log('Extraction complete:', { 
