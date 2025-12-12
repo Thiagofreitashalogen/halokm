@@ -149,6 +149,42 @@ export type Database = {
         }
         Relationships: []
       }
+      offer_client_links: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          offer_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          offer_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          offer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_client_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_client_links_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_method_links: {
         Row: {
           created_at: string
