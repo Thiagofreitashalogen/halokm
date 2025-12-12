@@ -483,40 +483,55 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
           });
       }
 
-      // If it's a project, link methods
+      // Helper function to get or create a method
+      const getOrCreateMethod = async (methodName: string): Promise<string> => {
+        const { data: existingMethod } = await supabase
+          .from('knowledge_entries')
+          .select('id')
+          .eq('category', 'method')
+          .ilike('title', methodName)
+          .maybeSingle();
+
+        if (existingMethod) {
+          return existingMethod.id;
+        }
+
+        const { data: newMethod, error: methodError } = await supabase
+          .from('knowledge_entries')
+          .insert({
+            category: 'method' as const,
+            title: methodName,
+            description: `Method identified from: ${summary.title}`,
+            use_cases: [`Used in: ${summary.title}`],
+          } as any)
+          .select()
+          .single();
+
+        if (methodError) throw methodError;
+        return newMethod.id;
+      };
+
+      // Link methods to projects
       if (summary.category === 'project' && summary.methods.length > 0) {
         for (const methodName of summary.methods) {
-          const { data: existingMethod } = await supabase
-            .from('knowledge_entries')
-            .select('id')
-            .eq('category', 'method')
-            .ilike('title', methodName)
-            .maybeSingle();
-
-          let methodId: string;
-
-          if (existingMethod) {
-            methodId = existingMethod.id;
-          } else {
-            const { data: newMethod, error: methodError } = await supabase
-              .from('knowledge_entries')
-              .insert({
-                category: 'method' as const,
-                title: methodName,
-                description: `Method identified from: ${summary.title}`,
-                use_cases: [`Used in: ${summary.title}`],
-              } as any)
-              .select()
-              .single();
-
-            if (methodError) throw methodError;
-            methodId = newMethod.id;
-          }
-
+          const methodId = await getOrCreateMethod(methodName);
           await supabase
             .from('project_method_links')
             .insert({
               project_id: entryData.id,
+              method_id: methodId,
+            });
+        }
+      }
+
+      // Link methods to offers
+      if (summary.category === 'offer' && summary.methods.length > 0) {
+        for (const methodName of summary.methods) {
+          const methodId = await getOrCreateMethod(methodName);
+          await supabase
+            .from('offer_method_links')
+            .insert({
+              offer_id: entryData.id,
               method_id: methodId,
             });
         }
