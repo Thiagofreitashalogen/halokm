@@ -127,7 +127,15 @@ Important:
     // Parse the JSON response
     let summary;
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      // Remove markdown code blocks if present
+      let cleanContent = content;
+      if (content.includes('```json')) {
+        cleanContent = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      } else if (content.includes('```')) {
+        cleanContent = content.replace(/```\s*/g, '');
+      }
+      
+      const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         summary = JSON.parse(jsonMatch[0]);
       } else {
