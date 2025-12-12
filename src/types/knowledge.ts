@@ -1,4 +1,4 @@
-export type KnowledgeCategory = 'project' | 'offer' | 'method';
+export type KnowledgeCategory = 'project' | 'offer' | 'method' | 'client' | 'person';
 
 export type OfferOutcome = 'won' | 'lost' | 'pending';
 export type OfferWorkStatus = 'under_development' | 'delivered';
@@ -37,6 +37,12 @@ export interface KnowledgeEntry {
   useCase?: string;
   useCases?: string[];
   steps?: string[];
+  
+  // People specific
+  studio?: string;
+  position?: string;
+  clientIds?: string[]; // IDs of client entries
+  expertiseMethodIds?: string[]; // IDs of method entries
   
   // Common
   relatedEntries?: string[];

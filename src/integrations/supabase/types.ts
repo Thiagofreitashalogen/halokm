@@ -33,12 +33,14 @@ export type Database = {
           offer_work_status:
             | Database["public"]["Enums"]["offer_work_status"]
             | null
+          position: string | null
           project_status: Database["public"]["Enums"]["project_status"] | null
           references_links: string[] | null
           source_drive_link: string | null
           source_miro_link: string | null
           start_date: string | null
           steps: string[] | null
+          studio: string | null
           tags: string[] | null
           title: string
           updated_at: string
@@ -64,12 +66,14 @@ export type Database = {
           offer_work_status?:
             | Database["public"]["Enums"]["offer_work_status"]
             | null
+          position?: string | null
           project_status?: Database["public"]["Enums"]["project_status"] | null
           references_links?: string[] | null
           source_drive_link?: string | null
           source_miro_link?: string | null
           start_date?: string | null
           steps?: string[] | null
+          studio?: string | null
           tags?: string[] | null
           title: string
           updated_at?: string
@@ -95,12 +99,14 @@ export type Database = {
           offer_work_status?:
             | Database["public"]["Enums"]["offer_work_status"]
             | null
+          position?: string | null
           project_status?: Database["public"]["Enums"]["project_status"] | null
           references_links?: string[] | null
           source_drive_link?: string | null
           source_miro_link?: string | null
           start_date?: string | null
           steps?: string[] | null
+          studio?: string | null
           tags?: string[] | null
           title?: string
           updated_at?: string
@@ -175,6 +181,78 @@ export type Database = {
           },
           {
             foreignKeyName: "offer_people_links_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_client_links: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          person_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          person_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_client_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_client_links_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people_method_expertise: {
+        Row: {
+          created_at: string
+          id: string
+          method_id: string
+          person_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          method_id: string
+          person_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          method_id?: string
+          person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_method_expertise_method_id_fkey"
+            columns: ["method_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_method_expertise_person_id_fkey"
             columns: ["person_id"]
             isOneToOne: false
             referencedRelation: "knowledge_entries"
