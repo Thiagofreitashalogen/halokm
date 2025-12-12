@@ -285,10 +285,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               </div>
             ) : (
               <>
-                {entry.client && (
+                {(entry.category === 'project' || entry.category === 'offer') && (
                   <span className="flex items-center gap-1.5">
                     <Building2 className="w-4 h-4" />
-                    {entry.client}
+                    {entry.client || <span className="italic text-muted-foreground/70">No client</span>}
                   </span>
                 )}
                 {entry.startDate && (
