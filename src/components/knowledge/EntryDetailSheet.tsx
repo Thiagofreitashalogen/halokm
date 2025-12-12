@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Users } from 'lucide-react';
+import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,6 +36,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   const [newLearning, setNewLearning] = useState('');
   const [newStep, setNewStep] = useState('');
   const [newUseCase, setNewUseCase] = useState('');
+  const [newReference, setNewReference] = useState('');
 
   if (!entry) return null;
 
@@ -49,6 +50,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
       tags: [...(entry.tags || [])],
       learnings: [...(entry.learnings || [])],
       deliverables: [...(entry.deliverables || [])],
+      referencesLinks: [...(entry.referencesLinks || [])],
       winningStrategy: entry.winningStrategy || '',
       lossReasons: entry.lossReasons || '',
       steps: [...(entry.steps || [])],
@@ -67,6 +69,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setNewLearning('');
     setNewStep('');
     setNewUseCase('');
+    setNewReference('');
   };
 
   const handleSave = async () => {
@@ -83,6 +86,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
 
       if (entry.category === 'project') {
         updateData.project_status = editData.projectStatus;
+        updateData.references_links = editData.referencesLinks || [];
       } else if (entry.category === 'offer') {
         updateData.offer_status = editData.offerOutcome;
         updateData.offer_work_status = editData.offerWorkStatus;
@@ -250,6 +254,12 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                     {entry.client}
                   </span>
                 )}
+                {entry.startDate && (
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" />
+                    Started {format(entry.startDate, 'MMM d, yyyy')}
+                  </span>
+                )}
                 {entry.dateDelivered && (
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4" />
@@ -334,6 +344,44 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                 </ul>
               ) : (
                 <p className="text-sm text-muted-foreground">No learnings recorded</p>
+              )}
+            </div>
+          )}
+
+          {/* Project specific: References */}
+          {entry.category === 'project' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Link2 className="w-4 h-4 text-primary" />
+                References
+              </h4>
+              {isEditing ? (
+                <EditableArrayField
+                  items={editData.referencesLinks || []}
+                  onAdd={(value) => addToArray('referencesLinks', value, setNewReference)}
+                  onRemove={(index) => removeFromArray('referencesLinks', index)}
+                  inputValue={newReference}
+                  setInputValue={setNewReference}
+                  placeholder="Add link (e.g., https://drive.google.com/...)"
+                />
+              ) : entry.referencesLinks && entry.referencesLinks.length > 0 ? (
+                <ul className="space-y-2">
+                  {entry.referencesLinks.map((link, idx) => (
+                    <li key={idx} className="text-sm flex items-center gap-2">
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <a 
+                        href={link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline truncate"
+                      >
+                        {link}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No references added</p>
               )}
             </div>
           )}
