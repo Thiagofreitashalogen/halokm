@@ -65,6 +65,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   // Edit state for offer linked entities
   const [editLinkedOfferMethodIds, setEditLinkedOfferMethodIds] = useState<string[]>([]);
   const [editLinkedOfferPeopleIds, setEditLinkedOfferPeopleIds] = useState<string[]>([]);
+  const [editLinkedOfferClientId, setEditLinkedOfferClientId] = useState<string | null>(null);
 
   // Fetch linked entities when viewing a client or project
   useEffect(() => {
@@ -298,6 +299,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     if (entry.category === 'offer') {
       setEditLinkedOfferMethodIds(linkedOfferMethods.map(m => m.id));
       setEditLinkedOfferPeopleIds(linkedOfferPeople.map(p => p.id));
+      setEditLinkedOfferClientId(linkedOfferClient?.id || null);
     }
     setIsEditing(true);
   };
@@ -315,6 +317,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setEditLinkedProjectPeopleIds([]);
     setEditLinkedOfferMethodIds([]);
     setEditLinkedOfferPeopleIds([]);
+    setEditLinkedOfferClientId(null);
   };
 
   const handleSave = async () => {
@@ -446,8 +449,24 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         }
       }
 
-      // Handle offer-method and offer-people linking
+      // Handle offer-method, offer-people, and offer-client linking
       if (entry.category === 'offer') {
+        // Remove existing client links
+        await supabase
+          .from('offer_client_links')
+          .delete()
+          .eq('offer_id', entry.id);
+
+        // Add new client link if set
+        if (editLinkedOfferClientId) {
+          await supabase
+            .from('offer_client_links')
+            .insert({
+              offer_id: entry.id,
+              client_id: editLinkedOfferClientId,
+            });
+        }
+
         // Remove existing method links
         await supabase
           .from('offer_method_links')
@@ -614,7 +633,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
         <div className="mt-6 space-y-6">
           {/* Meta info */}
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            {isEditing && (entry.category === 'project' || entry.category === 'offer') ? (
+            {isEditing && entry.category === 'project' ? (
               <div className="w-full space-y-2">
                 <Label className="text-xs">Client</Label>
                 <EntityAutocomplete
@@ -625,6 +644,33 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
                     // Store the client ID for linking
                     if (entityId) {
                       updateField('clientIds', [entityId]);
+                    }
+                  }}
+                  placeholder="Search or create client..."
+                />
+              </div>
+            ) : isEditing && entry.category === 'offer' ? (
+              <div className="w-full space-y-2">
+                <Label className="text-xs">Client</Label>
+                <EntityAutocomplete
+                  category="client"
+                  value={linkedOfferClient?.title || editData.client || ''}
+                  onChange={(value, entityId) => {
+                    updateField('client', value);
+                    // Store the client ID for offer linking
+                    if (entityId) {
+                      setEditLinkedOfferClientId(entityId);
+                      // Update display
+                      supabase
+                        .from('knowledge_entries')
+                        .select('id, title')
+                        .eq('id', entityId)
+                        .single()
+                        .then(({ data }) => {
+                          if (data) {
+                            setLinkedOfferClient(data);
+                          }
+                        });
                     }
                   }}
                   placeholder="Search or create client..."
