@@ -54,6 +54,12 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
   const [linkedOfferPeople, setLinkedOfferPeople] = useState<{id: string; title: string}[]>([]);
   const [linkedOfferClient, setLinkedOfferClient] = useState<{id: string; title: string} | null>(null);
   
+  // Linked entities for person view (reverse relationships)
+  const [linkedPersonProjects, setLinkedPersonProjects] = useState<{id: string; title: string}[]>([]);
+  const [linkedPersonOffers, setLinkedPersonOffers] = useState<{id: string; title: string}[]>([]);
+  const [linkedPersonClients, setLinkedPersonClients] = useState<{id: string; title: string}[]>([]);
+  const [linkedPersonMethods, setLinkedPersonMethods] = useState<{id: string; title: string}[]>([]);
+  
   // Edit state for client linked entities
   const [editLinkedProjectIds, setEditLinkedProjectIds] = useState<string[]>([]);
   const [editLinkedPeopleIds, setEditLinkedPeopleIds] = useState<string[]>([]);
@@ -216,6 +222,77 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
           setLinkedOfferPeople([]);
         }
       }
+      
+      // Person: fetch linked projects, offers, clients, and methods (reverse relationships)
+      if (entry.category === 'person') {
+        // Fetch linked projects via project_people_links
+        const { data: projectLinks } = await supabase
+          .from('project_people_links')
+          .select('project_id')
+          .eq('person_id', entry.id);
+        
+        if (projectLinks && projectLinks.length > 0) {
+          const projectIds = projectLinks.map(l => l.project_id);
+          const { data: projects } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', projectIds);
+          setLinkedPersonProjects(projects || []);
+        } else {
+          setLinkedPersonProjects([]);
+        }
+        
+        // Fetch linked offers via offer_people_links
+        const { data: offerLinks } = await supabase
+          .from('offer_people_links')
+          .select('offer_id')
+          .eq('person_id', entry.id);
+        
+        if (offerLinks && offerLinks.length > 0) {
+          const offerIds = offerLinks.map(l => l.offer_id);
+          const { data: offers } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', offerIds);
+          setLinkedPersonOffers(offers || []);
+        } else {
+          setLinkedPersonOffers([]);
+        }
+        
+        // Fetch linked clients via people_client_links
+        const { data: clientLinks } = await supabase
+          .from('people_client_links')
+          .select('client_id')
+          .eq('person_id', entry.id);
+        
+        if (clientLinks && clientLinks.length > 0) {
+          const clientIds = clientLinks.map(l => l.client_id);
+          const { data: clients } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', clientIds);
+          setLinkedPersonClients(clients || []);
+        } else {
+          setLinkedPersonClients([]);
+        }
+        
+        // Fetch method expertise via people_method_expertise
+        const { data: methodLinks } = await supabase
+          .from('people_method_expertise')
+          .select('method_id')
+          .eq('person_id', entry.id);
+        
+        if (methodLinks && methodLinks.length > 0) {
+          const methodIds = methodLinks.map(l => l.method_id);
+          const { data: methods } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', methodIds);
+          setLinkedPersonMethods(methods || []);
+        } else {
+          setLinkedPersonMethods([]);
+        }
+      }
     };
     
     // Reset edit state when entry changes
@@ -227,6 +304,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
     setEditLinkedOfferPeopleIds([]);
     setLinkedClient(null);
     setLinkedOfferClient(null);
+    setLinkedPersonProjects([]);
+    setLinkedPersonOffers([]);
+    setLinkedPersonClients([]);
+    setLinkedPersonMethods([]);
     
     fetchLinkedEntities();
   }, [entry?.id]);
@@ -775,7 +856,91 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
             </div>
           )}
 
-          {/* Project specific: Linked Methods */}
+          {/* Person specific: Linked Projects */}
+          {entry.category === 'person' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <FolderKanban className="w-4 h-4 text-primary" />
+                Projects Involved
+              </h4>
+              {linkedPersonProjects.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedPersonProjects.map((project) => (
+                    <Badge key={project.id} variant="secondary" className="font-normal">
+                      {project.title}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No projects linked</p>
+              )}
+            </div>
+          )}
+
+          {/* Person specific: Linked Offers */}
+          {entry.category === 'person' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-primary" />
+                Offers Involved
+              </h4>
+              {linkedPersonOffers.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedPersonOffers.map((offer) => (
+                    <Badge key={offer.id} variant="secondary" className="font-normal">
+                      {offer.title}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No offers linked</p>
+              )}
+            </div>
+          )}
+
+          {/* Person specific: Linked Clients */}
+          {entry.category === 'person' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-primary" />
+                Clients Worked With
+              </h4>
+              {linkedPersonClients.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedPersonClients.map((client) => (
+                    <Badge key={client.id} variant="secondary" className="font-normal">
+                      {client.title}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No clients linked</p>
+              )}
+            </div>
+          )}
+
+          {/* Person specific: Method Expertise */}
+          {entry.category === 'person' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Wrench className="w-4 h-4 text-primary" />
+                Method Expertise
+              </h4>
+              {linkedPersonMethods.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedPersonMethods.map((method) => (
+                    <Badge key={method.id} variant="secondary" className="font-normal">
+                      {method.title}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No methods linked</p>
+              )}
+            </div>
+          )}
+
+
           {entry.category === 'project' && (
             <div>
               <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
