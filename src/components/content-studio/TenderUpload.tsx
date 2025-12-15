@@ -127,6 +127,20 @@ export const TenderUpload = ({ onContentReady, isAnalyzing }: TenderUploadProps)
       });
 
       if (error) throw error;
+      
+      // Handle blocked websites gracefully
+      if (data.blocked) {
+        setLinks(prev => 
+          prev.map(l => l.id === linkItem.id ? { 
+            ...l, 
+            status: 'error' as const,
+            error: 'Website blocks automated access'
+          } : l)
+        );
+        toast.error('This website blocks automated access. Please paste the content manually.');
+        return;
+      }
+      
       if (data.error) throw new Error(data.error);
 
       setLinks(prev => 
