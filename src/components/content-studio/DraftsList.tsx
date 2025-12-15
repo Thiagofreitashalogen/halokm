@@ -151,7 +151,7 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
         <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableHead className="w-10">
+              <TableHead className="w-12 px-2">
                 <Checkbox
                   checked={allSelected}
                   ref={(el) => {
@@ -167,7 +167,7 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
               <TableHead className="w-20">Status</TableHead>
               <TableHead className="hidden md:table-cell">Summary</TableHead>
               <TableHead className="w-24">Updated</TableHead>
-              <TableHead className="w-10"></TableHead>
+              <TableHead className="w-12 px-2"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -178,18 +178,20 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
                 onClick={() => onOpenDraft(draft)}
                 data-state={selectedIds.has(draft.id) ? 'selected' : undefined}
               >
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell className="w-12 p-2" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={selectedIds.has(draft.id)}
                     onCheckedChange={() => toggleSelect(draft.id)}
                     aria-label={`Select ${draft.title}`}
                   />
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{draft.title}</span>
+                <TableCell className="min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium truncate" title={draft.title}>
+                      {draft.title}
+                    </span>
                     {draft.currently_editing_by && (
-                      <span className="flex items-center gap-1 text-xs text-yellow-600">
+                      <span className="flex items-center gap-1 text-xs text-yellow-600 shrink-0">
                         <Users className="w-3 h-3" />
                         Editing
                       </span>
@@ -204,10 +206,10 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
                 <TableCell className="hidden md:table-cell text-muted-foreground text-sm truncate">
                   {draft.tender_summary || '—'}
                 </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
+                <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                   {format(new Date(draft.updated_at), 'MMM d, yyyy')}
                 </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell className="w-12 p-2" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
