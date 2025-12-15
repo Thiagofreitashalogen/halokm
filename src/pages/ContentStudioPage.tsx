@@ -404,12 +404,15 @@ const ContentStudioPage = () => {
 
                   <div>
                     <label className="text-sm font-medium">Template (optional)</label>
-                    <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <Select 
+                      value={selectedTemplateId || "none"} 
+                      onValueChange={(val) => setSelectedTemplateId(val === "none" ? "" : val)}
+                    >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Select a template..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No template</SelectItem>
+                        <SelectItem value="none">No template</SelectItem>
                         {templates.map(t => (
                           <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                         ))}
@@ -419,12 +422,15 @@ const ContentStudioPage = () => {
 
                   <div>
                     <label className="text-sm font-medium">Style Guide (optional)</label>
-                    <Select value={selectedStyleGuideId} onValueChange={setSelectedStyleGuideId}>
+                    <Select 
+                      value={selectedStyleGuideId || "none"} 
+                      onValueChange={(val) => setSelectedStyleGuideId(val === "none" ? "" : val)}
+                    >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Select a style guide..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No style guide</SelectItem>
+                        <SelectItem value="none">No style guide</SelectItem>
                         {styleGuides.map(g => (
                           <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                         ))}
