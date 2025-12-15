@@ -103,11 +103,6 @@ export function AppSidebar() {
                     >
                       <item.icon className="w-4 h-4" />
                       <span>{item.title}</span>
-                      {item.badge && (
-                        <span className="ml-auto text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                          {item.badge}
-                        </span>
-                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
