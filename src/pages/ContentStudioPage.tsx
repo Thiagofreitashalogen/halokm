@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { DraftsList } from '@/components/content-studio/DraftsList';
 import { DraftDetailSheet } from '@/components/content-studio/DraftDetailSheet';
 import { TenderUpload } from '@/components/content-studio/TenderUpload';
+import { EntryDetailSheet } from '@/components/knowledge/EntryDetailSheet';
+import { KnowledgeEntry, KnowledgeCategory } from '@/types/knowledge';
 
 type Step = 'upload' | 'strategy' | 'configure' | 'generate' | 'edit';
 
@@ -78,6 +80,10 @@ const ContentStudioPage = () => {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  
+  // Knowledge entry navigation
+  const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
+  const [entrySheetOpen, setEntrySheetOpen] = useState(false);
 
   useEffect(() => {
     fetchTemplatesAndGuides();
@@ -240,6 +246,65 @@ const ContentStudioPage = () => {
             setSelectedDraft(data as Draft);
           }
         });
+    }
+  };
+
+  const handleNavigateToEntry = async (id: string, category: KnowledgeCategory) => {
+    try {
+      const { data, error } = await supabase
+        .from('knowledge_entries')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      
+      // Map snake_case to camelCase for KnowledgeEntry
+      const entry: KnowledgeEntry = {
+        id: data.id,
+        title: data.title,
+        category: data.category,
+        description: data.description || '',
+        tags: data.tags || [],
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+        client: data.client || undefined,
+        projectStatus: data.project_status || undefined,
+        startDate: data.start_date ? new Date(data.start_date) : undefined,
+        dateDelivered: data.date_delivered ? new Date(data.date_delivered) : undefined,
+        learnings: data.learnings || undefined,
+        learningsText: data.learnings_text || undefined,
+        deliverables: data.deliverables || undefined,
+        referencesLinks: data.references_links || undefined,
+        offerStatus: data.offer_status || undefined,
+        offerWorkStatus: data.offer_work_status || undefined,
+        winningStrategy: data.winning_strategy || undefined,
+        lossReasons: data.loss_reasons || undefined,
+        winFactors: data.win_factors || undefined,
+        lossFactors: data.loss_factors || undefined,
+        sourceDriveLink: data.source_drive_link || undefined,
+        sourceMiroLink: data.source_miro_link || undefined,
+        field: data.field || undefined,
+        domain: data.domain || undefined,
+        fullDescription: data.full_description || undefined,
+        useCases: data.use_cases || undefined,
+        studio: data.studio || undefined,
+        position: data.position || undefined,
+        industry: data.industry || undefined,
+      };
+      
+      setSelectedEntry(entry);
+      setEntrySheetOpen(true);
+    } catch (error) {
+      console.error('Error fetching entry:', error);
+      toast.error('Failed to load entry');
+    }
+  };
+
+  const handleEntrySheetClose = (open: boolean) => {
+    setEntrySheetOpen(open);
+    if (!open) {
+      setSelectedEntry(null);
     }
   };
 
@@ -506,6 +571,13 @@ const ContentStudioPage = () => {
           open={sheetOpen}
           onOpenChange={handleSheetClose}
           onDraftUpdated={handleDraftUpdated}
+          onNavigateToEntry={handleNavigateToEntry}
+        />
+
+        <EntryDetailSheet
+          entry={selectedEntry}
+          open={entrySheetOpen}
+          onOpenChange={handleEntrySheetClose}
         />
       </div>
     </MainLayout>

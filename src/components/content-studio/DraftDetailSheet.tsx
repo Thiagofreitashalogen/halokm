@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -40,14 +39,16 @@ import {
   Users, 
   FileText,
   Target,
-  CheckCircle,
   Package,
   ClipboardList,
   Sparkles,
   Calendar,
+  Lightbulb,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { LinkedEntityBadge } from '@/components/knowledge/LinkedEntityBadge';
+import { KnowledgeCategory } from '@/types/knowledge';
 
 interface Draft {
   id: string;
@@ -78,11 +79,18 @@ interface Version {
   created_at: string;
 }
 
+interface ReferencedEntity {
+  id: string;
+  title: string;
+  category: KnowledgeCategory;
+}
+
 interface DraftDetailSheetProps {
   draft: Draft | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDraftUpdated?: () => void;
+  onNavigateToEntry?: (id: string, category: KnowledgeCategory) => void;
 }
 
 const EDITOR_ID = `user-${Date.now()}`;
@@ -94,7 +102,7 @@ const statusColors: Record<string, string> = {
   published: 'bg-blue-500/10 text-blue-600',
 };
 
-export function DraftDetailSheet({ draft, open, onOpenChange, onDraftUpdated }: DraftDetailSheetProps) {
+export function DraftDetailSheet({ draft, open, onOpenChange, onDraftUpdated, onNavigateToEntry }: DraftDetailSheetProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -103,10 +111,62 @@ export function DraftDetailSheet({ draft, open, onOpenChange, onDraftUpdated }: 
   const [versions, setVersions] = useState<Version[]>([]);
   const [currentEditor, setCurrentEditor] = useState<string | null>(null);
   
+  // Referenced entities
+  const [referencedOffers, setReferencedOffers] = useState<ReferencedEntity[]>([]);
+  const [referencedMethods, setReferencedMethods] = useState<ReferencedEntity[]>([]);
+  const [loadingReferences, setLoadingReferences] = useState(false);
+  
   // Edit state
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editStrategy, setEditStrategy] = useState('');
+
+  // Fetch referenced entities when draft opens
+  useEffect(() => {
+    if (!draft || !open) {
+      setReferencedOffers([]);
+      setReferencedMethods([]);
+      return;
+    }
+
+    const fetchReferencedEntities = async () => {
+      setLoadingReferences(true);
+      
+      try {
+        const offerIds = draft.referenced_offers || [];
+        const methodIds = draft.referenced_methods || [];
+        
+        // Fetch offers and methods in parallel
+        const [offersResult, methodsResult] = await Promise.all([
+          offerIds.length > 0 
+            ? supabase
+                .from('knowledge_entries')
+                .select('id, title, category')
+                .in('id', offerIds)
+            : Promise.resolve({ data: [], error: null }),
+          methodIds.length > 0
+            ? supabase
+                .from('knowledge_entries')
+                .select('id, title, category')
+                .in('id', methodIds)
+            : Promise.resolve({ data: [], error: null }),
+        ]);
+
+        if (offersResult.data) {
+          setReferencedOffers(offersResult.data as ReferencedEntity[]);
+        }
+        if (methodsResult.data) {
+          setReferencedMethods(methodsResult.data as ReferencedEntity[]);
+        }
+      } catch (error) {
+        console.error('Error fetching referenced entities:', error);
+      } finally {
+        setLoadingReferences(false);
+      }
+    };
+
+    fetchReferencedEntities();
+  }, [draft?.id, draft?.referenced_offers, draft?.referenced_methods, open]);
 
   // Fetch full draft data and claim lock when editing
   useEffect(() => {
@@ -299,7 +359,15 @@ export function DraftDetailSheet({ draft, open, onOpenChange, onDraftUpdated }: 
     onOpenChange(false);
   };
 
+  const handleEntityClick = (id: string, category: KnowledgeCategory) => {
+    if (onNavigateToEntry) {
+      onNavigateToEntry(id, category);
+    }
+  };
+
   if (!draft) return null;
+
+  const hasReferences = referencedOffers.length > 0 || referencedMethods.length > 0;
 
   return (
     <>
@@ -469,6 +537,62 @@ export function DraftDetailSheet({ draft, open, onOpenChange, onDraftUpdated }: 
                 </p>
               )}
             </div>
+
+            {/* AI References Section */}
+            {(hasReferences || loadingReferences) && (
+              <>
+                <Separator />
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Lightbulb className="w-4 h-4 text-muted-foreground" />
+                    AI References
+                  </div>
+                  
+                  {loadingReferences ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading references...
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {referencedOffers.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-muted-foreground font-medium">Similar Offers</p>
+                          <div className="flex flex-wrap gap-2">
+                            {referencedOffers.map(offer => (
+                              <LinkedEntityBadge
+                                key={offer.id}
+                                id={offer.id}
+                                title={offer.title}
+                                category={offer.category}
+                                onClick={handleEntityClick}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {referencedMethods.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-muted-foreground font-medium">Recommended Methods</p>
+                          <div className="flex flex-wrap gap-2">
+                            {referencedMethods.map(method => (
+                              <LinkedEntityBadge
+                                key={method.id}
+                                id={method.id}
+                                title={method.title}
+                                category={method.category}
+                                onClick={handleEntityClick}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
 
             <Separator />
 

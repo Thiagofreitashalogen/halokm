@@ -1,11 +1,10 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, Link as LinkIcon, X, Loader2, File } from 'lucide-react';
+import { Upload, FileText, Link as LinkIcon, X, Loader2, File, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -18,6 +17,14 @@ interface UploadedFile {
   error?: string;
 }
 
+interface LinkItem {
+  id: string;
+  url: string;
+  content?: string;
+  status: 'fetching' | 'ready' | 'error';
+  error?: string;
+}
+
 interface TenderUploadProps {
   onContentReady: (content: string, files?: UploadedFile[]) => void;
   isAnalyzing: boolean;
@@ -26,7 +33,7 @@ interface TenderUploadProps {
 export const TenderUpload = ({ onContentReady, isAnalyzing }: TenderUploadProps) => {
   const [pastedContent, setPastedContent] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [links, setLinks] = useState<string[]>([]);
+  const [links, setLinks] = useState<LinkItem[]>([]);
   const [newLink, setNewLink] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -113,15 +120,72 @@ export const TenderUpload = ({ onContentReady, isAnalyzing }: TenderUploadProps)
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
-  const addLink = () => {
-    if (newLink.trim() && !links.includes(newLink.trim())) {
-      setLinks(prev => [...prev, newLink.trim()]);
-      setNewLink('');
+  const fetchLinkContent = async (linkItem: LinkItem) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-url-content', {
+        body: { url: linkItem.url },
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      setLinks(prev => 
+        prev.map(l => l.id === linkItem.id ? { 
+          ...l, 
+          status: 'ready' as const,
+          content: data.content
+        } : l)
+      );
+
+      toast.success(`Fetched content from link`);
+    } catch (error) {
+      console.error('Link fetch error:', error);
+      setLinks(prev => 
+        prev.map(l => l.id === linkItem.id ? { 
+          ...l, 
+          status: 'error' as const,
+          error: error instanceof Error ? error.message : 'Failed to fetch'
+        } : l)
+      );
+      toast.error(`Failed to fetch link content`);
     }
   };
 
-  const removeLink = (link: string) => {
-    setLinks(prev => prev.filter(l => l !== link));
+  const addLink = async () => {
+    const url = newLink.trim();
+    if (!url) return;
+    
+    // Validate URL format
+    try {
+      new URL(url.startsWith('http') ? url : `https://${url}`);
+    } catch {
+      toast.error('Please enter a valid URL');
+      return;
+    }
+
+    const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
+    
+    // Check for duplicates
+    if (links.some(l => l.url === normalizedUrl)) {
+      toast.error('This link has already been added');
+      return;
+    }
+
+    const linkItem: LinkItem = {
+      id: crypto.randomUUID(),
+      url: normalizedUrl,
+      status: 'fetching',
+    };
+
+    setLinks(prev => [...prev, linkItem]);
+    setNewLink('');
+
+    // Fetch content immediately
+    fetchLinkContent(linkItem);
+  };
+
+  const removeLink = (linkId: string) => {
+    setLinks(prev => prev.filter(l => l.id !== linkId));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -138,11 +202,12 @@ export const TenderUpload = ({ onContentReady, isAnalyzing }: TenderUploadProps)
       .map(f => `--- ${f.name} ---\n${f.content}`)
       .join('\n\n');
 
-    const linksList = links.length > 0 
-      ? `\n\n--- Referenced Links ---\n${links.join('\n')}`
-      : '';
+    const linkContents = links
+      .filter(l => l.status === 'ready' && l.content)
+      .map(l => `--- ${l.url} ---\n${l.content}`)
+      .join('\n\n');
 
-    const combinedContent = [pastedContent, fileContents, linksList]
+    const combinedContent = [pastedContent, fileContents, linkContents]
       .filter(Boolean)
       .join('\n\n');
 
@@ -156,9 +221,32 @@ export const TenderUpload = ({ onContentReady, isAnalyzing }: TenderUploadProps)
 
   const hasContent = pastedContent.trim() || 
     uploadedFiles.some(f => f.status === 'ready') || 
-    links.length > 0;
+    links.some(l => l.status === 'ready');
 
-  const isProcessing = uploadedFiles.some(f => f.status === 'uploading' || f.status === 'parsing');
+  const isProcessing = uploadedFiles.some(f => f.status === 'uploading' || f.status === 'parsing') ||
+    links.some(l => l.status === 'fetching');
+
+  const getStatusIcon = (status: 'fetching' | 'ready' | 'error') => {
+    switch (status) {
+      case 'fetching':
+        return <Loader2 className="w-3 h-3 animate-spin" />;
+      case 'ready':
+        return <CheckCircle className="w-3 h-3" />;
+      case 'error':
+        return <AlertCircle className="w-3 h-3" />;
+    }
+  };
+
+  const getStatusColor = (status: 'fetching' | 'ready' | 'error') => {
+    switch (status) {
+      case 'fetching':
+        return 'bg-muted text-muted-foreground';
+      case 'ready':
+        return 'bg-emerald-600 text-white';
+      case 'error':
+        return 'bg-destructive text-destructive-foreground';
+    }
+  };
 
   return (
     <Card>
@@ -277,24 +365,31 @@ export const TenderUpload = ({ onContentReady, isAnalyzing }: TenderUploadProps)
             </Button>
           </div>
           {links.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="space-y-2 mt-2">
               {links.map(link => (
-                <Badge 
-                  key={link} 
-                  variant="secondary"
-                  className="flex items-center gap-1 pr-1"
+                <div 
+                  key={link.id}
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                 >
-                  <LinkIcon className="w-3 h-3" />
-                  <span className="max-w-[200px] truncate">{link}</span>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <LinkIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm truncate">{link.url}</span>
+                    <Badge className={`text-xs shrink-0 ${getStatusColor(link.status)}`}>
+                      {getStatusIcon(link.status)}
+                      <span className="ml-1">
+                        {link.status === 'fetching' ? 'Fetching' : link.status === 'ready' ? 'Ready' : 'Error'}
+                      </span>
+                    </Badge>
+                  </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeLink(link)}
-                    className="h-5 w-5 p-0 ml-1 hover:bg-transparent"
+                    onClick={() => removeLink(link.id)}
+                    className="h-8 w-8 p-0 shrink-0"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-4 h-4" />
                   </Button>
-                </Badge>
+                </div>
               ))}
             </div>
           )}
@@ -326,7 +421,7 @@ export const TenderUpload = ({ onContentReady, isAnalyzing }: TenderUploadProps)
           ) : isProcessing ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing files...
+              Processing...
             </>
           ) : (
             <>
