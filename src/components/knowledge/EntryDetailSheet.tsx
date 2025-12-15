@@ -86,7 +86,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
   // Fetch linked entities when viewing a client or project
   useEffect(() => {
     const fetchLinkedEntities = async () => {
-      if (!entry) return;
+      if (!entry || !open) return;
       
       // Client: fetch linked projects and people
       if (entry.category === 'client') {
@@ -320,7 +320,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
     setLinkedPersonMethods([]);
     
     fetchLinkedEntities();
-  }, [entry?.id]);
+  }, [entry?.id, open]);
 
   // Sync edit state when linked entities are loaded while already editing
   useEffect(() => {
