@@ -584,7 +584,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
         updateData.project_status = editData.projectStatus;
         updateData.references_links = editData.referencesLinks || [];
         updateData.full_description = editData.fullDescription || null;
-        updateData.learnings_text = editData.learningsText || null;
+        updateData.learnings = editData.learnings || [];
       } else if (entry.category === 'offer') {
         updateData.offer_status = editData.offerStatus;
         updateData.offer_work_status = editData.offerWorkStatus;
@@ -1531,7 +1531,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
             </div>
           )}
 
-          {/* Project specific: Learnings (manual text field) */}
+          {/* Project specific: Learnings (array of items like tags) */}
           {entry.category === 'project' && (
             <div>
               <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
@@ -1539,16 +1539,57 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 Learnings
               </h4>
               {isEditing ? (
-                <Textarea
-                  value={editData.learningsText || ''}
-                  onChange={(e) => updateField('learningsText', e.target.value)}
-                  className="min-h-[150px] resize-y"
-                  placeholder="Capture key learnings, insights, and reflections from this project..."
-                />
-              ) : entry.learningsText ? (
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {entry.learningsText}
-                </p>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {(editData.learnings || []).map((learning, index) => (
+                      <Badge 
+                        key={`${learning}-${index}`} 
+                        variant="secondary" 
+                        className="font-normal pr-1 gap-1 group max-w-full"
+                      >
+                        <span className="truncate">{learning}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeFromArray('learnings', index)}
+                          className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5 transition-colors flex-shrink-0"
+                          aria-label={`Remove learning`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newLearning}
+                      onChange={(e) => setNewLearning(e.target.value)}
+                      placeholder="Add learning..."
+                      className="h-8 text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addToArray('learnings', newLearning, setNewLearning);
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 flex-shrink-0"
+                      onClick={() => addToArray('learnings', newLearning, setNewLearning)}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : entry.learnings && entry.learnings.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {entry.learnings.map((learning, index) => (
+                    <Badge key={`${learning}-${index}`} variant="secondary" className="font-normal">
+                      {learning}
+                    </Badge>
+                  ))}
+                </div>
               ) : (
                 <p className="text-sm text-muted-foreground">No learnings recorded</p>
               )}
