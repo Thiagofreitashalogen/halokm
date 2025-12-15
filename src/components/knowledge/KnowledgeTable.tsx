@@ -94,8 +94,8 @@ const getCellContent = (
         // Use linked client from junction table, fallback to text field for legacy data
         return linkedClients[entry.id]?.title || entry.client || '—';
       case 'offer':
-        // For offers, still use text field until we add offer_client_links table
-        return entry.client || '—';
+        // Use linked client from junction table, fallback to text field for legacy data
+        return linkedClients[entry.id]?.title || entry.client || '—';
       case 'method':
         return entry.domain || '—';
       case 'client':
