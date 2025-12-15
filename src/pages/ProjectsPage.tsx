@@ -10,6 +10,7 @@ import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { fetchEntryById } from '@/hooks/useNavigateToEntry';
 
 const ProjectsPage = () => {
   const { filters, setFilters } = useKnowledge('project');
@@ -105,6 +106,10 @@ const ProjectsPage = () => {
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
           onEntryUpdated={fetchProjects}
+          onNavigateToEntry={async (id) => {
+            const entry = await fetchEntryById(id);
+            if (entry) setSelectedEntry(entry);
+          }}
         />
 
         <AddEntryDialog

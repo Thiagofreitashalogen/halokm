@@ -3,6 +3,7 @@ import { KnowledgeEntry, KnowledgeCategory } from '@/types/knowledge';
 import { CategoryBadge } from './CategoryBadge';
 import { StatusBadge } from './StatusBadge';
 import { EntityAutocomplete } from './EntityAutocomplete';
+import { LinkedEntityBadge } from './LinkedEntityBadge';
 import {
   Sheet,
   SheetContent,
@@ -26,9 +27,10 @@ interface EntryDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEntryUpdated?: () => void;
+  onNavigateToEntry?: (entryId: string) => void;
 }
 
-export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: EntryDetailSheetProps) {
+export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, onNavigateToEntry }: EntryDetailSheetProps) {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -866,9 +868,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               {linkedPersonProjects.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedPersonProjects.map((project) => (
-                    <Badge key={project.id} variant="secondary" className="font-normal">
-                      {project.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={project.id} 
+                      id={project.id} 
+                      title={project.title} 
+                      category="project"
+                      onClick={() => onNavigateToEntry?.(project.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -887,9 +893,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               {linkedPersonOffers.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedPersonOffers.map((offer) => (
-                    <Badge key={offer.id} variant="secondary" className="font-normal">
-                      {offer.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={offer.id} 
+                      id={offer.id} 
+                      title={offer.title} 
+                      category="offer"
+                      onClick={() => onNavigateToEntry?.(offer.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -908,9 +918,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               {linkedPersonClients.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedPersonClients.map((client) => (
-                    <Badge key={client.id} variant="secondary" className="font-normal">
-                      {client.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={client.id} 
+                      id={client.id} 
+                      title={client.title} 
+                      category="client"
+                      onClick={() => onNavigateToEntry?.(client.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -929,9 +943,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               {linkedPersonMethods.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedPersonMethods.map((method) => (
-                    <Badge key={method.id} variant="secondary" className="font-normal">
-                      {method.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={method.id} 
+                      id={method.id} 
+                      title={method.title} 
+                      category="method"
+                      onClick={() => onNavigateToEntry?.(method.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -992,9 +1010,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               ) : linkedMethods.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedMethods.map((method) => (
-                    <Badge key={method.id} variant="secondary" className="font-normal">
-                      {method.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={method.id} 
+                      id={method.id} 
+                      title={method.title} 
+                      category="method"
+                      onClick={() => onNavigateToEntry?.(method.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -1055,9 +1077,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               ) : linkedProjectPeople.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedProjectPeople.map((person) => (
-                    <Badge key={person.id} variant="secondary" className="font-normal">
-                      {person.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={person.id} 
+                      id={person.id} 
+                      title={person.title} 
+                      category="person"
+                      onClick={() => onNavigateToEntry?.(person.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -1140,9 +1166,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               ) : linkedProjects.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedProjects.map((project) => (
-                    <Badge key={project.id} variant="secondary" className="font-normal">
-                      {project.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={project.id} 
+                      id={project.id} 
+                      title={project.title} 
+                      category="project"
+                      onClick={() => onNavigateToEntry?.(project.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -1204,9 +1234,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               ) : linkedPeople.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedPeople.map((person) => (
-                    <Badge key={person.id} variant="secondary" className="font-normal">
-                      {person.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={person.id} 
+                      id={person.id} 
+                      title={person.title} 
+                      category="person"
+                      onClick={() => onNavigateToEntry?.(person.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -1414,9 +1448,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               ) : linkedOfferMethods.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedOfferMethods.map((method) => (
-                    <Badge key={method.id} variant="secondary" className="font-normal">
-                      {method.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={method.id} 
+                      id={method.id} 
+                      title={method.title} 
+                      category="method"
+                      onClick={() => onNavigateToEntry?.(method.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -1477,9 +1515,13 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated }: 
               ) : linkedOfferPeople.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedOfferPeople.map((person) => (
-                    <Badge key={person.id} variant="secondary" className="font-normal">
-                      {person.title}
-                    </Badge>
+                    <LinkedEntityBadge 
+                      key={person.id} 
+                      id={person.id} 
+                      title={person.title} 
+                      category="person"
+                      onClick={() => onNavigateToEntry?.(person.id)}
+                    />
                   ))}
                 </div>
               ) : (
