@@ -1562,7 +1562,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                   <Textarea
                     value={editData.lossReasons || ''}
                     onChange={(e) => updateField('lossReasons', e.target.value)}
-                    className="min-h-[80px] resize-none"
+                    className="min-h-[200px] resize-y"
                     placeholder="Describe the reasons for losing..."
                   />
                   <div className="flex items-center gap-2">
