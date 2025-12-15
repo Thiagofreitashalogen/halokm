@@ -589,6 +589,19 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
       });
 
       setIsEditing(false);
+      
+      // Refetch the entry to update the view with saved data
+      const { data: updatedEntry } = await supabase
+        .from('knowledge_entries')
+        .select('*')
+        .eq('id', entry.id)
+        .single();
+      
+      if (updatedEntry && onNavigateToEntry) {
+        // Navigate to the updated entry to refresh the view
+        onNavigateToEntry(entry.id);
+      }
+      
       onEntryUpdated?.();
     } catch (error) {
       console.error('Error updating entry:', error);
