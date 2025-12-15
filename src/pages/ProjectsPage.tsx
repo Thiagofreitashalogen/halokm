@@ -47,6 +47,8 @@ const ProjectsPage = () => {
         client: entry.client || undefined,
         tags: entry.tags || [],
         learnings: entry.learnings || [],
+        learningsText: entry.learnings_text || undefined,
+        fullDescription: entry.full_description || undefined,
         deliverables: entry.deliverables || [],
         startDate: entry.start_date ? new Date(entry.start_date) : undefined,
         dateDelivered: entry.date_delivered ? new Date(entry.date_delivered) : undefined,
