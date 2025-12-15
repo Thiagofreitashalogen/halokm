@@ -31,7 +31,7 @@ const categoryConfig: Record<KnowledgeCategory, { label: string; icon: typeof Fo
   person: {
     label: 'Person',
     icon: UserCircle,
-    className: 'bg-accent/10 text-accent-foreground border-accent/20',
+    className: 'bg-category-person/10 text-category-person border-category-person/20',
   },
 };
 

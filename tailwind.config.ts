@@ -64,6 +64,7 @@ export default {
           project: "hsl(var(--category-project))",
           offer: "hsl(var(--category-offer))",
           method: "hsl(var(--category-method))",
+          person: "hsl(var(--category-person))",
         },
         status: {
           won: "hsl(var(--status-won))",
