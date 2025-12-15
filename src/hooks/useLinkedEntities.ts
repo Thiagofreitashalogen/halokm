@@ -82,7 +82,7 @@ export async function fetchLinkedClientsForEntries(
 }
 
 // Hook for fetching linked entities for table display
-export function useLinkedClientsForTable(entries: { id: string; category: KnowledgeCategory }[]) {
+export function useLinkedClientsForTable(entries: { id: string; category: KnowledgeCategory }[], refreshKey?: number) {
   const [linkedClients, setLinkedClients] = useState<Record<string, LinkedEntity | null>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [fetchKey, setFetchKey] = useState(0);
@@ -125,7 +125,7 @@ export function useLinkedClientsForTable(entries: { id: string; category: Knowle
     };
     
     fetchClients();
-  }, [entries.map(e => e.id).join(','), fetchKey]);
+  }, [entries.map(e => e.id).join(','), fetchKey, refreshKey]);
   
   return { linkedClients, isLoading, refetch: () => setFetchKey(k => k + 1) };
 }

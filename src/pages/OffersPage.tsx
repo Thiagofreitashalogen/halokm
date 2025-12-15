@@ -15,6 +15,7 @@ const OffersPage = () => {
   const { entries, allEntries, filters, setFilters, stats, refetch } = useKnowledge('offer');
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const offerEntries = allEntries.filter(e => e.category === 'offer');
   const wonCount = offerEntries.filter(e => e.offerStatus === 'won').length;
@@ -68,7 +69,7 @@ const OffersPage = () => {
 
 
         <div className="mt-6">
-          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={refetch} category="offer" />
+          <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={refetch} category="offer" refreshKey={refreshKey} />
         </div>
 
         <EntryDetailSheet
@@ -77,7 +78,8 @@ const OffersPage = () => {
           onOpenChange={(open) => {
             if (!open) {
               setSelectedEntry(null);
-              refetch(); // Refetch to update linked client names in table
+              refetch();
+              setRefreshKey(k => k + 1); // Also refresh linked clients in table
             }
           }}
           onEntryUpdated={refetch}

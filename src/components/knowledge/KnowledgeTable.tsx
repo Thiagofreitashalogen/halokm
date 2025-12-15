@@ -25,6 +25,7 @@ interface KnowledgeTableProps {
   selectedIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
   category?: KnowledgeCategory | null;
+  refreshKey?: number;
 }
 
 // Define column configurations per category
@@ -113,7 +114,7 @@ const getCellContent = (
   }
 };
 
-export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelectionChange, category }: KnowledgeTableProps) {
+export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelectionChange, category, refreshKey }: KnowledgeTableProps) {
   // Prepare entries data for the linked clients hook
   const entriesForLinking = useMemo(() => 
     entries.map(e => ({ id: e.id, category: e.category })),
@@ -121,7 +122,7 @@ export function KnowledgeTable({ entries, onEntryClick, selectedIds, onSelection
   );
   
   // Fetch linked clients for projects dynamically
-  const { linkedClients } = useLinkedClientsForTable(entriesForLinking);
+  const { linkedClients } = useLinkedClientsForTable(entriesForLinking, refreshKey);
   
   const allSelected = entries.length > 0 && selectedIds.size === entries.length;
   const someSelected = selectedIds.size > 0 && selectedIds.size < entries.length;

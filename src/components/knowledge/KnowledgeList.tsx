@@ -23,11 +23,12 @@ interface KnowledgeListProps {
   onEntryClick?: (entry: KnowledgeEntry) => void;
   onEntriesDeleted?: () => void;
   category?: KnowledgeCategory | null;
+  refreshKey?: number;
 }
 
 type ViewMode = 'cards' | 'table';
 
-export function KnowledgeList({ entries, onEntryClick, onEntriesDeleted, category }: KnowledgeListProps) {
+export function KnowledgeList({ entries, onEntryClick, onEntriesDeleted, category, refreshKey }: KnowledgeListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
@@ -128,6 +129,7 @@ export function KnowledgeList({ entries, onEntryClick, onEntriesDeleted, categor
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           category={category}
+          refreshKey={refreshKey}
         />
       )}
 
