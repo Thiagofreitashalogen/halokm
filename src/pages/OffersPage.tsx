@@ -74,7 +74,12 @@ const OffersPage = () => {
         <EntryDetailSheet
           entry={selectedEntry}
           open={!!selectedEntry}
-          onOpenChange={(open) => !open && setSelectedEntry(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedEntry(null);
+              refetch(); // Refetch to update linked client names in table
+            }
+          }}
           onEntryUpdated={refetch}
           onNavigateToEntry={async (id) => {
             const entry = await fetchEntryById(id);

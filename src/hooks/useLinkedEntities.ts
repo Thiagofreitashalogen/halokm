@@ -85,6 +85,14 @@ export async function fetchLinkedClientsForEntries(
 export function useLinkedClientsForTable(entries: { id: string; category: KnowledgeCategory }[]) {
   const [linkedClients, setLinkedClients] = useState<Record<string, LinkedEntity | null>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchKey, setFetchKey] = useState(0);
+  
+  // Refetch when window regains focus (user may have edited a client name)
+  useEffect(() => {
+    const handleFocus = () => setFetchKey(k => k + 1);
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
   
   useEffect(() => {
     const fetchClients = async () => {
@@ -117,9 +125,9 @@ export function useLinkedClientsForTable(entries: { id: string; category: Knowle
     };
     
     fetchClients();
-  }, [entries.map(e => e.id).join(',')]);
+  }, [entries.map(e => e.id).join(','), fetchKey]);
   
-  return { linkedClients, isLoading };
+  return { linkedClients, isLoading, refetch: () => setFetchKey(k => k + 1) };
 }
 
 // Hook for fetching all linked entities for a single entry (for detail sheet)
