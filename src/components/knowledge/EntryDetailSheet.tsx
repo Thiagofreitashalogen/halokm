@@ -810,9 +810,9 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
   return (
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-wrap">
+        <SheetHeader className="space-y-4 pr-8">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap flex-1">
               <CategoryBadge category={entry.category} />
               {!isEditing && entry.offerWorkStatus && (
                 <StatusBadge status={entry.offerWorkStatus} />
