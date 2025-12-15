@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Database, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const ACCESS_KEY = 'halogen_kb_access';
-const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || '';
 
 export function isAuthenticated(): boolean {
   return sessionStorage.getItem(ACCESS_KEY) === 'true';
@@ -28,16 +28,31 @@ export default function LoginPage() {
     }
   }, [navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (password === APP_PASSWORD) {
-      sessionStorage.setItem(ACCESS_KEY, 'true');
-      toast.success('Access granted');
-      navigate('/', { replace: true });
-    } else {
-      toast.error('Incorrect password');
+    try {
+      const { data, error } = await supabase.functions.invoke('validate-password', {
+        body: { password }
+      });
+
+      if (error) {
+        toast.error('Failed to validate password');
+        setIsLoading(false);
+        return;
+      }
+
+      if (data?.valid) {
+        sessionStorage.setItem(ACCESS_KEY, 'true');
+        toast.success('Access granted');
+        navigate('/', { replace: true });
+      } else {
+        toast.error('Incorrect password');
+        setIsLoading(false);
+      }
+    } catch (err) {
+      toast.error('Failed to validate password');
       setIsLoading(false);
     }
   };
