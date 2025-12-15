@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.fetch-google-drive]
 verify_jwt = true
+
+[functions.analyze-loss-reasons]
+verify_jwt = true

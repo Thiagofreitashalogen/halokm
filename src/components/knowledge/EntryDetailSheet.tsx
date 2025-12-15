@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { KnowledgeEntry, KnowledgeCategory } from '@/types/knowledge';
 import { CategoryBadge } from './CategoryBadge';
 import { StatusBadge } from './StatusBadge';
@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink, FolderKanban, Users, Wrench, FileText, Tag, Briefcase, MapPin, Factory, BookOpen, Target } from 'lucide-react';
+import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink, FolderKanban, Users, Wrench, FileText, Tag, Briefcase, MapPin, Factory, BookOpen, Target, Upload, Sparkles, File } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -39,6 +39,14 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
   const [newLearning, setNewLearning] = useState('');
   const [newUseCase, setNewUseCase] = useState('');
   const [newReference, setNewReference] = useState('');
+  
+  // Document upload states
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [isAnalyzingDoc, setIsAnalyzingDoc] = useState(false);
+  const lossReasonsFileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Uploaded documents for offers
+  const [uploadedDocuments, setUploadedDocuments] = useState<{name: string; url: string}[]>([]);
   
   // Linked client for project/offer view
   const [linkedClient, setLinkedClient] = useState<{id: string; title: string} | null>(null);
@@ -341,6 +349,163 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
       }
     }
   }, [isEditing, linkedMethods, linkedProjectPeople, linkedProjects, linkedPeople, linkedOfferMethods, linkedOfferPeople, entry?.category]);
+
+  // Fetch uploaded documents for offers
+  useEffect(() => {
+    const fetchUploadedDocuments = async () => {
+      if (!entry || entry.category !== 'offer') {
+        setUploadedDocuments([]);
+        return;
+      }
+      
+      try {
+        const { data: files, error } = await supabase.storage
+          .from('knowledge')
+          .list(`offers/${entry.id}/documents`);
+        
+        if (error) {
+          console.error('Error fetching documents:', error);
+          return;
+        }
+        
+        if (files && files.length > 0) {
+          const docs = await Promise.all(
+            files.map(async (file) => {
+              const { data } = supabase.storage
+                .from('knowledge')
+                .getPublicUrl(`offers/${entry.id}/documents/${file.name}`);
+              return { name: file.name, url: data.publicUrl };
+            })
+          );
+          setUploadedDocuments(docs);
+        } else {
+          setUploadedDocuments([]);
+        }
+      } catch (err) {
+        console.error('Error fetching documents:', err);
+      }
+    };
+    
+    fetchUploadedDocuments();
+  }, [entry?.id, entry?.category]);
+
+  // Handle document upload for loss reasons analysis
+  const handleLossReasonsDocUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !entry) return;
+    
+    setIsUploadingDoc(true);
+    
+    try {
+      // 1. Upload file to storage
+      const filePath = `offers/${entry.id}/documents/${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('knowledge')
+        .upload(filePath, file, { upsert: true });
+      
+      if (uploadError) throw uploadError;
+      
+      // Add to uploaded documents list
+      const { data: urlData } = supabase.storage
+        .from('knowledge')
+        .getPublicUrl(filePath);
+      
+      setUploadedDocuments(prev => [...prev, { name: file.name, url: urlData.publicUrl }]);
+      
+      toast({
+        title: 'Document uploaded',
+        description: 'Analyzing document content...',
+      });
+      
+      // 2. Parse the document
+      setIsAnalyzingDoc(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const { data: sessionData } = await supabase.auth.getSession();
+      const parseResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: formData,
+        }
+      );
+      
+      if (!parseResponse.ok) {
+        throw new Error('Failed to parse document');
+      }
+      
+      const parseResult = await parseResponse.json();
+      let documentContent = parseResult.text || parseResult.content || '';
+      
+      // Handle async parsing
+      if (parseResult.jobId) {
+        // Poll for completion
+        let attempts = 0;
+        while (attempts < 30) {
+          await new Promise(r => setTimeout(r, 2000));
+          const statusResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document?jobId=${parseResult.jobId}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+            }
+          );
+          const statusResult = await statusResponse.json();
+          if (statusResult.status === 'completed') {
+            documentContent = statusResult.content || '';
+            break;
+          } else if (statusResult.status === 'failed') {
+            throw new Error(statusResult.error || 'Document parsing failed');
+          }
+          attempts++;
+        }
+      }
+      
+      if (!documentContent) {
+        throw new Error('No content extracted from document');
+      }
+      
+      // 3. Analyze with AI
+      const { data: analyzeData, error: analyzeError } = await supabase.functions.invoke('analyze-loss-reasons', {
+        body: { documentContent, entryTitle: entry.title }
+      });
+      
+      if (analyzeError) throw analyzeError;
+      
+      if (analyzeData?.summary) {
+        // Update the loss reasons field
+        const existingReasons = editData.lossReasons || entry.lossReasons || '';
+        const newReasons = existingReasons 
+          ? `${existingReasons}\n\n--- AI Analysis from ${file.name} ---\n${analyzeData.summary}`
+          : analyzeData.summary;
+        
+        setEditData(prev => ({ ...prev, lossReasons: newReasons }));
+        
+        toast({
+          title: 'Analysis complete',
+          description: 'Loss reasons have been updated with AI insights.',
+        });
+      }
+    } catch (error) {
+      console.error('Error processing document:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to process document',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingDoc(false);
+      setIsAnalyzingDoc(false);
+      if (lossReasonsFileInputRef.current) {
+        lossReasonsFileInputRef.current.value = '';
+      }
+    }
+  };
 
   if (!entry) return null;
 
@@ -1393,14 +1558,48 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 Loss Reasons
               </h4>
               {isEditing ? (
-                <Textarea
-                  value={editData.lossReasons || ''}
-                  onChange={(e) => updateField('lossReasons', e.target.value)}
-                  className="min-h-[80px] resize-none"
-                  placeholder="Describe the reasons for losing..."
-                />
+                <div className="space-y-3">
+                  <Textarea
+                    value={editData.lossReasons || ''}
+                    onChange={(e) => updateField('lossReasons', e.target.value)}
+                    className="min-h-[80px] resize-none"
+                    placeholder="Describe the reasons for losing..."
+                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={lossReasonsFileInputRef}
+                      type="file"
+                      accept=".pdf,.docx,.doc,.pptx,.txt,.md"
+                      onChange={handleLossReasonsDocUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => lossReasonsFileInputRef.current?.click()}
+                      disabled={isUploadingDoc || isAnalyzingDoc}
+                      className="gap-1.5"
+                    >
+                      {isUploadingDoc || isAnalyzingDoc ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {isAnalyzingDoc ? 'Analyzing...' : 'Uploading...'}
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Upload & Analyze Document
+                        </>
+                      )}
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      AI will summarize loss reasons from the document
+                    </span>
+                  </div>
+                </div>
               ) : entry.lossReasons ? (
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {entry.lossReasons}
                 </p>
               ) : (
@@ -1539,6 +1738,35 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">No people linked</p>
+              )}
+            </div>
+          )}
+
+          {/* Offer specific: References/Documents */}
+          {entry.category === 'offer' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <File className="w-4 h-4 text-primary" />
+                References & Documents
+              </h4>
+              {uploadedDocuments.length > 0 ? (
+                <ul className="space-y-2">
+                  {uploadedDocuments.map((doc, idx) => (
+                    <li key={idx} className="text-sm flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <a 
+                        href={doc.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline truncate"
+                      >
+                        {doc.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No documents uploaded</p>
               )}
             </div>
           )}
