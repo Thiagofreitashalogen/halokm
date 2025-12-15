@@ -148,10 +148,10 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
       )}
 
       <div className="rounded-lg border border-border/60 overflow-hidden">
-        <Table>
+        <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableHead className="w-[40px]">
+              <TableHead className="w-10">
                 <Checkbox
                   checked={allSelected}
                   ref={(el) => {
@@ -163,11 +163,11 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
                   aria-label="Select all"
                 />
               </TableHead>
-              <TableHead className="w-[300px]">Title</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
-              <TableHead>Summary</TableHead>
-              <TableHead className="w-[140px]">Updated</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[35%]">Title</TableHead>
+              <TableHead className="w-20">Status</TableHead>
+              <TableHead className="hidden md:table-cell">Summary</TableHead>
+              <TableHead className="w-24">Updated</TableHead>
+              <TableHead className="w-10"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -201,7 +201,7 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
                     {draft.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-muted-foreground text-sm truncate max-w-[300px]">
+                <TableCell className="hidden md:table-cell text-muted-foreground text-sm truncate">
                   {draft.tender_summary || '—'}
                 </TableCell>
                 <TableCell className="text-muted-foreground text-sm">
