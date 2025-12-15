@@ -203,8 +203,8 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
                     {draft.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-muted-foreground text-sm truncate">
-                  {draft.tender_summary || '—'}
+                <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                  <span className="line-clamp-2">{draft.tender_summary || '—'}</span>
                 </TableCell>
                 <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                   {format(new Date(draft.updated_at), 'MMM d, yyyy')}
