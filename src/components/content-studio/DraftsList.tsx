@@ -1,7 +1,16 @@
+import { useState } from 'react';
 import { FileText, Clock, Users, Trash2, MoreVertical } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useState } from 'react';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 interface Draft {
   id: string;
@@ -51,6 +59,7 @@ const statusColors: Record<string, string> = {
 
 export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -73,6 +82,47 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from('content_drafts')
+        .delete()
+        .in('id', Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast.success(`${selectedIds.size} draft(s) deleted`);
+      setSelectedIds(new Set());
+      onRefresh();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      toast.error('Failed to delete drafts');
+    }
+  };
+
+  const allSelected = drafts.length > 0 && selectedIds.size === drafts.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < drafts.length;
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(drafts.map(d => d.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
   if (drafts.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
@@ -85,63 +135,100 @@ export const DraftsList = ({ drafts, onOpenDraft, onRefresh }: DraftsListProps) 
 
   return (
     <>
-      <div className="space-y-3">
-        {drafts.map(draft => (
-          <Card 
-            key={draft.id} 
-            className="border-border/60 hover:border-border transition-colors cursor-pointer"
-            onClick={() => onOpenDraft(draft)}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 mb-4 p-3 bg-muted/50 rounded-lg">
+          <span className="text-sm text-muted-foreground">
+            {selectedIds.size} selected
+          </span>
+          <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete Selected
+          </Button>
+        </div>
+      )}
+
+      <div className="rounded-lg border border-border/60 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) {
+                      (el as HTMLButtonElement & { indeterminate: boolean }).indeterminate = someSelected;
+                    }
+                  }}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label="Select all"
+                />
+              </TableHead>
+              <TableHead className="w-[300px]">Title</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead>Summary</TableHead>
+              <TableHead className="w-[140px]">Updated</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {drafts.map(draft => (
+              <TableRow
+                key={draft.id}
+                className="cursor-pointer"
+                onClick={() => onOpenDraft(draft)}
+                data-state={selectedIds.has(draft.id) ? 'selected' : undefined}
+              >
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedIds.has(draft.id)}
+                    onCheckedChange={() => toggleSelect(draft.id)}
+                    aria-label={`Select ${draft.title}`}
+                  />
+                </TableCell>
+                <TableCell>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium">{draft.title}</h3>
-                    <Badge className={statusColors[draft.status] || statusColors.draft}>
-                      {draft.status}
-                    </Badge>
-                  </div>
-                  {draft.tender_summary && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {draft.tender_summary}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Updated {formatDistanceToNow(new Date(draft.updated_at), { addSuffix: true })}
-                    </span>
+                    <span className="font-medium">{draft.title}</span>
                     {draft.currently_editing_by && (
-                      <span className="flex items-center gap-1 text-yellow-600">
+                      <span className="flex items-center gap-1 text-xs text-yellow-600">
                         <Users className="w-3 h-3" />
-                        Being edited by {draft.currently_editing_by}
+                        Editing
                       </span>
                     )}
                   </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem 
-                      className="text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteId(draft.id);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                </TableCell>
+                <TableCell>
+                  <Badge className={statusColors[draft.status] || statusColors.draft}>
+                    {draft.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-muted-foreground text-sm truncate max-w-[300px]">
+                  {draft.tender_summary || '—'}
+                </TableCell>
+                <TableCell className="text-muted-foreground text-sm">
+                  {format(new Date(draft.updated_at), 'MMM d, yyyy')}
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem 
+                        className="text-destructive"
+                        onClick={() => setDeleteId(draft.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
