@@ -869,11 +869,23 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 Edit
               </Button>
             ) : (
-              <div className="flex gap-1">
-                <Button variant="ghost" size="sm" onClick={cancelEditing} disabled={isSaving}>
-                  <X className="w-4 h-4" />
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={cancelEditing} 
+                  disabled={isSaving}
+                  className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Cancel
                 </Button>
-                <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                <Button 
+                  size="sm" 
+                  onClick={handleSave} 
+                  disabled={isSaving}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                   Save
                 </Button>
