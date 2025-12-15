@@ -27,7 +27,7 @@ const mainNavItems = [
 
 const toolsNavItems = [
   { title: 'Search', url: '/search', icon: Search },
-  { title: 'AI Assistant', url: '/assistant', icon: Sparkles, badge: 'Soon' },
+  { title: 'AI Content Studio', url: '/assistant', icon: Sparkles, badge: 'Soon' },
 ];
 
 export function AppSidebar() {
