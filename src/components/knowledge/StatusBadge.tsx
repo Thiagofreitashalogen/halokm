@@ -20,18 +20,18 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     label: 'Lost',
     className: 'bg-status-lost/10 text-status-lost border-status-lost/20',
   },
-  pending: {
-    label: 'Pending',
-    className: 'bg-status-pending/10 text-status-pending border-status-pending/20',
-  },
   // Offer work status
+  delivered: {
+    label: 'Delivered',
+    className: 'bg-status-completed/10 text-status-completed border-status-completed/20',
+  },
   under_development: {
     label: 'Under Development',
     className: 'bg-status-active/10 text-status-active border-status-active/20',
   },
-  delivered: {
-    label: 'Delivered',
-    className: 'bg-status-completed/10 text-status-completed border-status-completed/20',
+  pending: {
+    label: 'Pending',
+    className: 'bg-status-pending/10 text-status-pending border-status-pending/20',
   },
   // Project status
   active: {
