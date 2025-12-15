@@ -18,6 +18,7 @@ const ProjectsPage = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -99,14 +100,20 @@ const ProjectsPage = () => {
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">Loading projects...</div>
           ) : (
-            <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={fetchProjects} category="project" />
+            <KnowledgeList entries={entries} onEntryClick={setSelectedEntry} onEntriesDeleted={fetchProjects} category="project" refreshKey={refreshKey} />
           )}
         </div>
 
         <EntryDetailSheet
           entry={selectedEntry}
           open={!!selectedEntry}
-          onOpenChange={(open) => !open && setSelectedEntry(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedEntry(null);
+              fetchProjects();
+              setRefreshKey(k => k + 1);
+            }
+          }}
           onEntryUpdated={fetchProjects}
           onNavigateToEntry={async (id) => {
             const entry = await fetchEntryById(id);
