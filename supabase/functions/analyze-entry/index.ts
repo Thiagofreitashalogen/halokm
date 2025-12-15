@@ -35,7 +35,7 @@ ${links ? `Links provided:\n${links}` : ''}
       suggestedCategory 
     });
 
-    const systemPrompt = `You are an expert at analyzing design consultancy documentation and extracting structured information for a knowledge management system.
+const systemPrompt = `You are an expert at analyzing design consultancy documentation and extracting structured information for a knowledge management system.
 
 Your task is to:
 1. DETERMINE the correct category for this entry:
@@ -63,6 +63,7 @@ Respond ONLY with a valid JSON object in this exact format:
   "offerStatus": "draft" | "pending" | "won" | "lost",
   "winFactors": ["Factor that helped win"],
   "lossFactors": ["Reason for losing"],
+  "fullDescription": "A detailed summary of the offer content (max 2000 words). This should comprehensively cover the uploaded content, including the offer's goals, scope, proposed approach, methodology, key differentiators, and any other relevant details from the source material.",
   
   // For methods:
   "useCases": ["When to use this", "Another use case"],
@@ -76,7 +77,8 @@ Important:
 - Use empty arrays [] for fields with no data
 - Always return valid JSON
 - Infer the most likely category from the content
-- Extract as many relevant tags as possible for searchability`;
+- Extract as many relevant tags as possible for searchability
+- For offers, the "fullDescription" field should be a comprehensive summary (up to 2000 words) that captures the key content from the uploaded documents`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -178,6 +180,7 @@ Important:
       lossFactors: Array.isArray(summary.lossFactors) ? summary.lossFactors : [],
       useCases: Array.isArray(summary.useCases) ? summary.useCases : [],
       steps: Array.isArray(summary.steps) ? summary.steps : [],
+      fullDescription: summary.fullDescription || '',
     };
 
     console.log('Returning normalized summary:', normalizedSummary.category, normalizedSummary.title);

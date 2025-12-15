@@ -588,6 +588,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
         updateData.offer_work_status = editData.offerWorkStatus;
         updateData.winning_strategy = editData.winningStrategy || null;
         updateData.loss_reasons = editData.lossReasons || null;
+        updateData.full_description = editData.fullDescription || null;
       } else if (entry.category === 'method') {
         updateData.use_cases = editData.useCases || [];
         updateData.field = editData.field || null;
@@ -1458,7 +1459,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
           )}
 
           {/* Project specific: Learnings */}
-          {(entry.category === 'project' || (entry.learnings && entry.learnings.length > 0)) && (
+          {entry.category === 'project' && (
             <div>
               <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
                 <Lightbulb className="w-4 h-4 text-status-pending" />
@@ -1484,6 +1485,30 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 </ul>
               ) : (
                 <p className="text-sm text-muted-foreground">No learnings recorded</p>
+              )}
+            </div>
+          )}
+
+          {/* Offer specific: Detailed Summary */}
+          {entry.category === 'offer' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-category-offer" />
+                Detailed Summary
+              </h4>
+              {isEditing ? (
+                <Textarea
+                  value={editData.fullDescription || ''}
+                  onChange={(e) => updateField('fullDescription', e.target.value)}
+                  className="min-h-[300px] resize-y"
+                  placeholder="Enter a detailed summary of the offer content (max 2000 words)..."
+                />
+              ) : entry.fullDescription ? (
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {entry.fullDescription}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">No detailed summary recorded</p>
               )}
             </div>
           )}
