@@ -1438,14 +1438,49 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 Tags
               </h4>
               {isEditing ? (
-                <EditableArrayField
-                  items={editData.tags || []}
-                  onAdd={(value) => addToArray('tags', value, setNewTag)}
-                  onRemove={(index) => removeFromArray('tags', index)}
-                  inputValue={newTag}
-                  setInputValue={setNewTag}
-                  placeholder="Add tag..."
-                />
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {(editData.tags || []).map((tag, index) => (
+                      <Badge 
+                        key={`${tag}-${index}`} 
+                        variant="secondary" 
+                        className="font-normal pr-1 gap-1 group"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeFromArray('tags', index)}
+                          className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5 transition-colors"
+                          aria-label={`Remove ${tag}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Add tag..."
+                      className="h-8 text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addToArray('tags', newTag, setNewTag);
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 flex-shrink-0"
+                      onClick={() => addToArray('tags', newTag, setNewTag)}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               ) : entry.tags.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {entry.tags.map((tag) => (
