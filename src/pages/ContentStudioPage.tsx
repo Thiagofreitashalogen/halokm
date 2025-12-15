@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DraftsList } from '@/components/content-studio/DraftsList';
 import { DraftEditor } from '@/components/content-studio/DraftEditor';
+import { DraftDetailSheet } from '@/components/content-studio/DraftDetailSheet';
 
 type Step = 'upload' | 'strategy' | 'configure' | 'generate' | 'edit';
 
@@ -45,11 +46,18 @@ interface Draft {
   status: string;
   tender_summary: string | null;
   winning_strategy: string | null;
+  challenges: string[] | null;
+  deliverables: string[] | null;
+  requirements: string[] | null;
   draft_content: string | null;
   currently_editing_by: string | null;
   currently_editing_since: string | null;
   created_at: string;
   updated_at: string;
+  selected_template_id: string | null;
+  selected_style_guide_id: string | null;
+  referenced_offers: string[] | null;
+  referenced_methods: string[] | null;
 }
 
 const ContentStudioPage = () => {
@@ -69,6 +77,7 @@ const ContentStudioPage = () => {
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     fetchTemplatesAndGuides();
@@ -202,12 +211,31 @@ const ContentStudioPage = () => {
 
   const handleOpenDraft = (draft: Draft) => {
     setSelectedDraft(draft);
-    setActiveTab('drafts');
+    setSheetOpen(true);
   };
 
-  const handleCloseDraft = () => {
-    setSelectedDraft(null);
+  const handleSheetClose = (open: boolean) => {
+    setSheetOpen(open);
+    if (!open) {
+      setSelectedDraft(null);
+    }
+  };
+
+  const handleDraftUpdated = () => {
     fetchDrafts();
+    // Refresh the selected draft data
+    if (selectedDraft) {
+      supabase
+        .from('content_drafts')
+        .select('*')
+        .eq('id', selectedDraft.id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setSelectedDraft(data as Draft);
+          }
+        });
+    }
   };
 
   const resetWorkflow = () => {
@@ -482,21 +510,16 @@ const ContentStudioPage = () => {
           </TabsContent>
 
           <TabsContent value="drafts" className="mt-6">
-            {selectedDraft ? (
-              <DraftEditor
-                draftId={selectedDraft.id}
-                initialContent={selectedDraft.draft_content || ''}
-                onClose={handleCloseDraft}
-                onPublish={() => {
-                  fetchDrafts();
-                  handleCloseDraft();
-                }}
-              />
-            ) : (
-              <DraftsList drafts={drafts} onOpenDraft={handleOpenDraft} onRefresh={fetchDrafts} />
-            )}
+            <DraftsList drafts={drafts} onOpenDraft={handleOpenDraft} onRefresh={fetchDrafts} />
           </TabsContent>
         </Tabs>
+
+        <DraftDetailSheet
+          draft={selectedDraft}
+          open={sheetOpen}
+          onOpenChange={handleSheetClose}
+          onDraftUpdated={handleDraftUpdated}
+        />
       </div>
     </MainLayout>
   );
