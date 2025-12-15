@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.smart-search]
 verify_jwt = false
+
+[functions.parse-template]
+verify_jwt = false
