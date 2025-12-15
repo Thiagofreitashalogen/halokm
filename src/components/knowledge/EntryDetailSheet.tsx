@@ -583,6 +583,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
       if (entry.category === 'project') {
         updateData.project_status = editData.projectStatus;
         updateData.references_links = editData.referencesLinks || [];
+        updateData.full_description = editData.fullDescription || null;
+        updateData.learnings_text = editData.learningsText || null;
       } else if (entry.category === 'offer') {
         updateData.offer_status = editData.offerStatus;
         updateData.offer_work_status = editData.offerWorkStatus;
