@@ -8,6 +8,7 @@ import { EntryDetailSheet } from '@/components/knowledge/EntryDetailSheet';
 import { AddEntryDialog } from '@/components/knowledge/AddEntryDialog';
 import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
+import { fetchEntryById } from '@/hooks/useNavigateToEntry';
 
 const MethodsPage = () => {
   const { entries, filters, setFilters, stats, refetch } = useKnowledge('method');
@@ -40,6 +41,10 @@ const MethodsPage = () => {
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
           onEntryUpdated={refetch}
+          onNavigateToEntry={async (id) => {
+            const entry = await fetchEntryById(id);
+            if (entry) setSelectedEntry(entry);
+          }}
         />
 
         <AddEntryDialog

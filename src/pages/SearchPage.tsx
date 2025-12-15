@@ -9,6 +9,7 @@ import { KnowledgeEntry } from '@/types/knowledge';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { allTags } from '@/data/sampleData';
+import { fetchEntryById } from '@/hooks/useNavigateToEntry';
 
 const SearchPage = () => {
   const { entries, filters, setFilters } = useKnowledge();
@@ -90,6 +91,10 @@ const SearchPage = () => {
           entry={selectedEntry}
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
+          onNavigateToEntry={async (id) => {
+            const entry = await fetchEntryById(id);
+            if (entry) setSelectedEntry(entry);
+          }}
         />
       </div>
     </MainLayout>

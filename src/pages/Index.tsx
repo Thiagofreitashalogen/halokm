@@ -9,6 +9,7 @@ import { AddEntryDialog } from '@/components/knowledge/AddEntryDialog';
 import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
 import { Card, CardContent } from '@/components/ui/card';
+import { fetchEntryById } from '@/hooks/useNavigateToEntry';
 
 const Index = () => {
   const { entries, filters, setFilters, stats, refetch } = useKnowledge();
@@ -62,6 +63,10 @@ const Index = () => {
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
           onEntryUpdated={refetch}
+          onNavigateToEntry={async (id) => {
+            const entry = await fetchEntryById(id);
+            if (entry) setSelectedEntry(entry);
+          }}
         />
 
         <AddEntryDialog

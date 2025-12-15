@@ -8,6 +8,7 @@ import { AddEntryDialog } from '@/components/knowledge/AddEntryDialog';
 import { KnowledgeEntry, FilterState } from '@/types/knowledge';
 import { supabase } from '@/integrations/supabase/client';
 import { Building2 } from 'lucide-react';
+import { fetchEntryById } from '@/hooks/useNavigateToEntry';
 
 const ClientsPage = () => {
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
@@ -105,6 +106,10 @@ const ClientsPage = () => {
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
           onEntryUpdated={fetchEntries}
+          onNavigateToEntry={async (id) => {
+            const entry = await fetchEntryById(id);
+            if (entry) setSelectedEntry(entry);
+          }}
         />
 
         <AddEntryDialog

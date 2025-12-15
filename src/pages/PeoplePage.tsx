@@ -10,6 +10,7 @@ import { useKnowledge } from '@/hooks/useKnowledge';
 import { KnowledgeEntry } from '@/types/knowledge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { fetchEntryById } from '@/hooks/useNavigateToEntry';
 
 const PeoplePage = () => {
   const { filters, setFilters } = useKnowledge('person');
@@ -95,6 +96,10 @@ const PeoplePage = () => {
           open={!!selectedEntry}
           onOpenChange={(open) => !open && setSelectedEntry(null)}
           onEntryUpdated={fetchPeople}
+          onNavigateToEntry={async (id) => {
+            const entry = await fetchEntryById(id);
+            if (entry) setSelectedEntry(entry);
+          }}
         />
 
         <AddEntryDialog
