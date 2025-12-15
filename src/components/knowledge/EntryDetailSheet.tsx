@@ -646,10 +646,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-wrap">
               <CategoryBadge category={entry.category} />
-              {!isEditing && status && <StatusBadge status={status} />}
               {!isEditing && entry.offerWorkStatus && (
                 <StatusBadge status={entry.offerWorkStatus} />
               )}
+              {!isEditing && status && <StatusBadge status={status} />}
               {isEditing && entry.category === 'project' && (
                 <Select
                   value={editData.projectStatus || 'active'}
