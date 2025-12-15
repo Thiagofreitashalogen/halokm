@@ -812,7 +812,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader className="space-y-4 pr-8">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 flex-wrap flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap flex-1">
               <CategoryBadge category={entry.category} />
               {!isEditing && entry.offerWorkStatus && (
                 <StatusBadge status={entry.offerWorkStatus} />
@@ -823,7 +823,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                   value={editData.projectStatus || 'active'}
                   onValueChange={(value) => updateField('projectStatus', value)}
                 >
-                  <SelectTrigger className="h-7 w-36 text-xs">
+                  <SelectTrigger className="h-6 w-28 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -839,11 +839,11 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                     value={editData.offerWorkStatus || 'under_development'}
                     onValueChange={(value) => updateField('offerWorkStatus', value)}
                   >
-                    <SelectTrigger className="h-7 w-36 text-xs">
+                    <SelectTrigger className="h-6 w-28 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="under_development">Under Development</SelectItem>
+                      <SelectItem value="under_development">In Progress</SelectItem>
                       <SelectItem value="delivered">Delivered</SelectItem>
                     </SelectContent>
                   </Select>
@@ -851,7 +851,7 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                     value={editData.offerStatus || 'pending'}
                     onValueChange={(value) => updateField('offerStatus', value)}
                   >
-                    <SelectTrigger className="h-7 w-24 text-xs">
+                    <SelectTrigger className="h-6 w-20 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -864,29 +864,29 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
               )}
             </div>
             {!isEditing ? (
-              <Button variant="ghost" size="sm" onClick={startEditing}>
-                <Pencil className="w-4 h-4 mr-1" />
+              <Button variant="ghost" size="sm" onClick={startEditing} className="h-7 text-xs px-2">
+                <Pencil className="w-3 h-3 mr-1" />
                 Edit
               </Button>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 flex-shrink-0">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={cancelEditing} 
                   disabled={isSaving}
-                  className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
+                  className="h-7 text-xs px-2 text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
                 >
-                  <X className="w-4 h-4 mr-1" />
+                  <X className="w-3 h-3 mr-1" />
                   Cancel
                 </Button>
                 <Button 
                   size="sm" 
                   onClick={handleSave} 
                   disabled={isSaving}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="h-7 text-xs px-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
-                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+                  {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
                   Save
                 </Button>
               </div>
