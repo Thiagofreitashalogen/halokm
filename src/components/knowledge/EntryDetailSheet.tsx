@@ -1458,31 +1458,48 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
             </div>
           )}
 
-          {/* Project specific: Learnings */}
+          {/* Project specific: Detailed Summary */}
+          {entry.category === 'project' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-category-project" />
+                Detailed Summary
+              </h4>
+              {isEditing ? (
+                <Textarea
+                  value={editData.fullDescription || ''}
+                  onChange={(e) => updateField('fullDescription', e.target.value)}
+                  className="min-h-[300px] resize-y"
+                  placeholder="Enter a detailed summary of the project (max 2000 words). Include: goals and objectives, methods and tools used, process and activities, deliverables, and outcomes..."
+                />
+              ) : entry.fullDescription ? (
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {entry.fullDescription}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">No detailed summary recorded</p>
+              )}
+            </div>
+          )}
+
+          {/* Project specific: Learnings (manual text field) */}
           {entry.category === 'project' && (
             <div>
               <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
                 <Lightbulb className="w-4 h-4 text-status-pending" />
-                Key Learnings
+                Learnings
               </h4>
               {isEditing ? (
-                <EditableArrayField
-                  items={editData.learnings || []}
-                  onAdd={(value) => addToArray('learnings', value, setNewLearning)}
-                  onRemove={(index) => removeFromArray('learnings', index)}
-                  inputValue={newLearning}
-                  setInputValue={setNewLearning}
-                  placeholder="Add learning..."
+                <Textarea
+                  value={editData.learningsText || ''}
+                  onChange={(e) => updateField('learningsText', e.target.value)}
+                  className="min-h-[150px] resize-y"
+                  placeholder="Capture key learnings, insights, and reflections from this project..."
                 />
-              ) : entry.learnings && entry.learnings.length > 0 ? (
-                <ul className="space-y-2">
-                  {entry.learnings.map((learning, idx) => (
-                    <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-muted-foreground/50 mt-1">•</span>
-                      {learning}
-                    </li>
-                  ))}
-                </ul>
+              ) : entry.learningsText ? (
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {entry.learningsText}
+                </p>
               ) : (
                 <p className="text-sm text-muted-foreground">No learnings recorded</p>
               )}
