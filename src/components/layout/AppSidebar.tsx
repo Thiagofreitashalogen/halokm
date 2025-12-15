@@ -1,7 +1,7 @@
 import { Database, FileText, Lightbulb, FolderOpen, Search, Settings, Sparkles, Users, UserCircle, LogOut } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { logout } from '@/pages/LoginPage';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -32,7 +32,12 @@ const toolsNavItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <Sidebar className="border-r border-sidebar-border">
@@ -125,22 +130,15 @@ export function AppSidebar() {
           <span>Settings</span>
         </NavLink>
         
-        {user && (
-          <div className="pt-2 border-t border-sidebar-border">
-            <div className="px-3 py-1 text-xs text-muted-foreground truncate mb-2">
-              {user.email}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={signOut}
-              className="w-full justify-start gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent/50"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign out
-            </Button>
-          </div>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleLogout}
+          className="w-full justify-start gap-3 px-3 text-sidebar-foreground hover:bg-sidebar-accent/50"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign out
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );
