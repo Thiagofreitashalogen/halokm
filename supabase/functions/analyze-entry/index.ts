@@ -53,9 +53,8 @@ Respond ONLY with a valid JSON object in this exact format:
   "client": "Client name if mentioned, or null",
   "tags": ["relevant", "tags", "for", "search"],
   
-  // For projects:
+  // For projects (do NOT extract methods - users will add these manually):
   "deliverables": ["Deliverable 1", "Deliverable 2"],
-  "methods": ["Method 1", "Tool 2"],
   "projectStatus": "active" | "completed" | "archived",
   "fullDescription": "A detailed summary of the project content (max 2000 words). This should comprehensively cover: 1) Project goals and objectives, 2) Methods and tools used, 3) Process and activities undertaken, 4) Deliverables produced, 5) Outcomes and results achieved.",
   

@@ -404,6 +404,10 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
       if (error) throw error;
 
       if (data.summary) {
+        // Clear methods for projects - users should add these manually
+        if (data.summary.category === 'project') {
+          data.summary.methods = [];
+        }
         setSummary(data.summary);
         setStep('review');
       } else {
