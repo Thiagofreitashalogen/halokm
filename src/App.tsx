@@ -13,6 +13,7 @@ import ClientsPage from "./pages/ClientsPage";
 import PeoplePage from "./pages/PeoplePage";
 import SearchPage from "./pages/SearchPage";
 import SmartSearchPage from "./pages/SmartSearchPage";
+import ContentStudioPage from "./pages/ContentStudioPage";
 import AssistantPage from "./pages/AssistantPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/people" element={<ProtectedRoute><PeoplePage /></ProtectedRoute>} />
             <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
             <Route path="/smart-search" element={<ProtectedRoute><SmartSearchPage /></ProtectedRoute>} />
+            <Route path="/content-studio" element={<ProtectedRoute><ContentStudioPage /></ProtectedRoute>} />
             <Route path="/assistant" element={<ProtectedRoute><AssistantPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

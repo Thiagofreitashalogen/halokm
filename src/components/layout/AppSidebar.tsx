@@ -1,4 +1,4 @@
-import { Database, FileText, Lightbulb, FolderOpen, Search, Settings, Sparkles, Users, UserCircle, LogOut, Brain } from 'lucide-react';
+import { Database, FileText, Lightbulb, FolderOpen, Search, Settings, Sparkles, Users, UserCircle, LogOut, Brain, PenTool } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { logout } from '@/pages/LoginPage';
@@ -27,8 +27,8 @@ const mainNavItems = [
 
 const toolsNavItems = [
   { title: 'Smart Search', url: '/smart-search', icon: Brain },
+  { title: 'AI Content Studio', url: '/content-studio', icon: PenTool },
   { title: 'Search', url: '/search', icon: Search },
-  { title: 'AI Content Studio', url: '/assistant', icon: Sparkles, badge: 'Soon' },
 ];
 
 export function AppSidebar() {

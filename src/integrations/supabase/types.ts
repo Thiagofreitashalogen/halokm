@@ -14,6 +14,122 @@ export type Database = {
   }
   public: {
     Tables: {
+      content_draft_versions: {
+        Row: {
+          change_summary: string | null
+          changed_by: string | null
+          content: string
+          created_at: string
+          draft_id: string
+          id: string
+          version_number: number
+        }
+        Insert: {
+          change_summary?: string | null
+          changed_by?: string | null
+          content: string
+          created_at?: string
+          draft_id: string
+          id?: string
+          version_number: number
+        }
+        Update: {
+          change_summary?: string | null
+          changed_by?: string | null
+          content?: string
+          created_at?: string
+          draft_id?: string
+          id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_draft_versions_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "content_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_drafts: {
+        Row: {
+          challenges: string[] | null
+          created_at: string
+          created_by: string | null
+          currently_editing_by: string | null
+          currently_editing_since: string | null
+          deliverables: string[] | null
+          draft_content: string | null
+          id: string
+          referenced_methods: string[] | null
+          referenced_offers: string[] | null
+          requirements: string[] | null
+          selected_style_guide_id: string | null
+          selected_template_id: string | null
+          status: string
+          tender_summary: string | null
+          title: string
+          updated_at: string
+          winning_strategy: string | null
+        }
+        Insert: {
+          challenges?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          currently_editing_by?: string | null
+          currently_editing_since?: string | null
+          deliverables?: string[] | null
+          draft_content?: string | null
+          id?: string
+          referenced_methods?: string[] | null
+          referenced_offers?: string[] | null
+          requirements?: string[] | null
+          selected_style_guide_id?: string | null
+          selected_template_id?: string | null
+          status?: string
+          tender_summary?: string | null
+          title: string
+          updated_at?: string
+          winning_strategy?: string | null
+        }
+        Update: {
+          challenges?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          currently_editing_by?: string | null
+          currently_editing_since?: string | null
+          deliverables?: string[] | null
+          draft_content?: string | null
+          id?: string
+          referenced_methods?: string[] | null
+          referenced_offers?: string[] | null
+          requirements?: string[] | null
+          selected_style_guide_id?: string | null
+          selected_template_id?: string | null
+          status?: string
+          tender_summary?: string | null
+          title?: string
+          updated_at?: string
+          winning_strategy?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_drafts_selected_style_guide_id_fkey"
+            columns: ["selected_style_guide_id"]
+            isOneToOne: false
+            referencedRelation: "style_guides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_drafts_selected_template_id_fkey"
+            columns: ["selected_template_id"]
+            isOneToOne: false
+            referencedRelation: "offer_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_parsing_jobs: {
         Row: {
           content: string | null
