@@ -42,14 +42,20 @@ ${miroContent || 'No content provided'}
             content: `You are an expert at analyzing design consultancy project documentation and extracting structured summaries.
 
 Your task is to analyze the provided content and extract:
-1. A clear project description (2-3 sentences summarizing what the project was about)
-2. A list of deliverables (tangible outputs produced)
-3. Methods and tools used (design methods, frameworks, tools, techniques)
+1. A SHORT SUMMARY: Maximum 3 paragraphs that concisely summarize what the project was about
+2. A DETAILED SUMMARY: Up to 2000 words covering:
+   - Goals and objectives of the project
+   - The process followed
+   - Methods and tools used
+   - What was delivered
+3. A list of deliverables (tangible outputs produced)
+4. Methods and tools used (design methods, frameworks, tools, techniques)
 
 Respond ONLY with a valid JSON object in this exact format:
 {
   "title": "Project title inferred from content",
-  "description": "A concise 2-3 sentence description of the project",
+  "description": "A short summary in maximum 3 paragraphs",
+  "full_description": "A detailed summary up to 2000 words covering goals/objectives, process, methods/tools, and deliverables",
   "client": "Client name if mentioned, or null",
   "deliverables": ["Deliverable 1", "Deliverable 2"],
   "methods": ["Method 1", "Tool 2", "Framework 3"],
@@ -108,6 +114,7 @@ If you cannot extract certain information, use empty arrays or null. Always retu
       summary = {
         title: 'Untitled Project',
         description: 'Could not extract description from the provided content.',
+        full_description: '',
         client: null,
         deliverables: [],
         methods: [],

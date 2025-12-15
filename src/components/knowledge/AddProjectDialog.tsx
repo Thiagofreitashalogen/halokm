@@ -13,6 +13,7 @@ import { EntityAutocomplete } from './EntityAutocomplete';
 interface ProjectSummary {
   title: string;
   description: string;
+  full_description: string;
   client: string | null;
   deliverables: string[];
   methods: string[];
@@ -138,6 +139,7 @@ export const AddProjectDialog = ({ open, onOpenChange, onProjectAdded }: AddProj
           category: 'project' as const,
           title: summary.title,
           description: summary.description,
+          full_description: summary.full_description,
           client: summary.client,
           project_status: 'completed' as const,
           deliverables: summary.deliverables,
@@ -338,14 +340,27 @@ export const AddProjectDialog = ({ open, onOpenChange, onProjectAdded }: AddProj
               </p>
             </div>
 
-            {/* Description */}
+            {/* Short Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Short Summary</Label>
+              <p className="text-xs text-muted-foreground">Maximum 3 paragraphs</p>
               <Textarea
                 id="description"
                 value={summary.description}
                 onChange={(e) => updateSummary('description', e.target.value)}
-                className="min-h-[80px] resize-none"
+                className="min-h-[100px] resize-none"
+              />
+            </div>
+
+            {/* Full Description */}
+            <div className="space-y-2">
+              <Label htmlFor="full_description">Detailed Summary</Label>
+              <p className="text-xs text-muted-foreground">Goals, process, methods, and deliverables (up to 2000 words)</p>
+              <Textarea
+                id="full_description"
+                value={summary.full_description}
+                onChange={(e) => updateSummary('full_description', e.target.value)}
+                className="min-h-[200px] resize-none"
               />
             </div>
 
