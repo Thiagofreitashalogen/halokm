@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PenTool, Upload, Sparkles, FileText, Check, ChevronRight, Loader2, AlertCircle, Clock, Users } from 'lucide-react';
+import { PenTool, Sparkles, FileText, Check, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/knowledge/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DraftsList } from '@/components/content-studio/DraftsList';
-import { DraftEditor } from '@/components/content-studio/DraftEditor';
 import { DraftDetailSheet } from '@/components/content-studio/DraftDetailSheet';
+import { TenderUpload } from '@/components/content-studio/TenderUpload';
 
 type Step = 'upload' | 'strategy' | 'configure' | 'generate' | 'edit';
 
@@ -106,16 +106,21 @@ const ContentStudioPage = () => {
     }
   };
 
-  const handleAnalyzeTender = async () => {
-    if (!tenderContent.trim()) {
-      toast.error('Please paste tender content first');
+  const handleAnalyzeTender = async (content?: string) => {
+    const contentToAnalyze = content || tenderContent;
+    if (!contentToAnalyze.trim()) {
+      toast.error('Please add tender content first');
       return;
+    }
+
+    if (content) {
+      setTenderContent(content);
     }
 
     setIsAnalyzing(true);
     try {
       const { data, error } = await supabase.functions.invoke('analyze-tender', {
-        body: { tenderContent },
+        body: { tenderContent: contentToAnalyze },
       });
 
       if (error) throw error;
@@ -292,39 +297,10 @@ const ContentStudioPage = () => {
 
             {/* Step 1: Upload Tender */}
             {step === 'upload' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Upload className="w-5 h-5" />
-                    Upload Tender Document
-                  </CardTitle>
-                  <CardDescription>
-                    Paste the tender/RFP content for AI analysis
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Textarea
-                    value={tenderContent}
-                    onChange={(e) => setTenderContent(e.target.value)}
-                    placeholder="Paste the tender/RFP content here..."
-                    rows={12}
-                    className="font-mono text-sm"
-                  />
-                  <Button onClick={handleAnalyzeTender} disabled={isAnalyzing || !tenderContent.trim()}>
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Analyze Tender
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
+              <TenderUpload
+                onContentReady={(content) => handleAnalyzeTender(content)}
+                isAnalyzing={isAnalyzing}
+              />
             )}
 
             {/* Step 2: Review Strategy */}
@@ -495,17 +471,28 @@ const ContentStudioPage = () => {
               </Card>
             )}
 
-            {/* Step 4/5: Edit Draft */}
+            {/* Step 4/5: Edit Draft - Opens in detail sheet */}
             {step === 'edit' && currentDraftId && (
-              <DraftEditor
-                draftId={currentDraftId}
-                initialContent={generatedDraft}
-                onClose={resetWorkflow}
-                onPublish={() => {
-                  fetchDrafts();
-                  resetWorkflow();
-                }}
-              />
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <Check className="w-12 h-12 mx-auto mb-4 text-emerald-600" />
+                  <h3 className="text-lg font-semibold mb-2">Draft Created Successfully</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Your offer draft has been generated and saved.
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button variant="outline" onClick={resetWorkflow}>
+                      Create Another
+                    </Button>
+                    <Button onClick={() => {
+                      setActiveTab('drafts');
+                      resetWorkflow();
+                    }}>
+                      View All Drafts
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
