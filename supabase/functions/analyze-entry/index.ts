@@ -52,12 +52,12 @@ Respond ONLY with a valid JSON object in this exact format:
   "description": "A comprehensive 2-4 sentence description",
   "client": "Client name if mentioned, or null",
   "tags": ["relevant", "tags", "for", "search"],
-  "learnings": ["Key insight 1", "Key insight 2"],
   
   // For projects:
   "deliverables": ["Deliverable 1", "Deliverable 2"],
   "methods": ["Method 1", "Tool 2"],
   "projectStatus": "active" | "completed" | "archived",
+  "fullDescription": "A detailed summary of the project content (max 2000 words). This should comprehensively cover: 1) Project goals and objectives, 2) Methods and tools used, 3) Process and activities undertaken, 4) Deliverables produced, 5) Outcomes and results achieved.",
   
   // For offers:
   "offerStatus": "draft" | "pending" | "won" | "lost",
@@ -78,7 +78,7 @@ Important:
 - Always return valid JSON
 - Infer the most likely category from the content
 - Extract as many relevant tags as possible for searchability
-- For offers, the "fullDescription" field should be a comprehensive summary (up to 2000 words) that captures the key content from the uploaded documents`;
+- For both projects and offers, the "fullDescription" field should be a comprehensive summary (up to 2000 words) that captures the key content from the uploaded documents`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -171,7 +171,6 @@ Important:
       description: summary.description || '',
       client: summary.client || null,
       tags: Array.isArray(summary.tags) ? summary.tags : [],
-      learnings: Array.isArray(summary.learnings) ? summary.learnings : [],
       deliverables: Array.isArray(summary.deliverables) ? summary.deliverables : [],
       methods: Array.isArray(summary.methods) ? summary.methods : [],
       projectStatus: summary.projectStatus || 'completed',

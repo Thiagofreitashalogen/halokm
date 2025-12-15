@@ -479,13 +479,14 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
         description: summary.description,
         client: summary.client, // Keep the string for display
         tags: summary.tags,
-        learnings: summary.learnings,
         deliverables: summary.deliverables,
       };
 
       if (summary.category === 'project') {
         insertData.project_status = summary.projectStatus || 'active';
         insertData.references_links = summary.referencesLinks || [];
+        insertData.full_description = summary.fullDescription || null;
+        // learnings is now a text field, not auto-generated
       } else if (summary.category === 'offer') {
         insertData.offer_status = summary.offerStatus || 'pending';
         insertData.offer_work_status = summary.offerWorkStatus || 'under_development';
