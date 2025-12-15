@@ -46,6 +46,7 @@ export function useKnowledge(categoryFilter?: KnowledgeCategory) {
           dateDelivered: row.date_delivered ? new Date(row.date_delivered) : undefined,
           deliverables: row.deliverables || undefined,
           learnings: row.learnings || undefined,
+          learningsText: row.learnings_text || undefined,
           referencesLinks: row.references_links || undefined,
           sourceDriveLink: row.source_drive_link || undefined,
           sourceMiroLink: row.source_miro_link || undefined,

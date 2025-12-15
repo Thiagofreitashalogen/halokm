@@ -18,7 +18,8 @@ export interface KnowledgeEntry {
   projectStatus?: ProjectStatus;
   startDate?: Date;
   dateDelivered?: Date;
-  learnings?: string[];
+  learnings?: string[]; // Legacy array field
+  learningsText?: string; // New text field for learnings
   deliverables?: string[];
   referencesLinks?: string[];
   peopleInvolved?: string[]; // IDs of people entries

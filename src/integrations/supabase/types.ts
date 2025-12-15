@@ -61,6 +61,7 @@ export type Database = {
           id: string
           industry: string | null
           learnings: string[] | null
+          learnings_text: string | null
           loss_factors: string[] | null
           loss_reasons: string | null
           offer_status: Database["public"]["Enums"]["offer_status"] | null
@@ -94,6 +95,7 @@ export type Database = {
           id?: string
           industry?: string | null
           learnings?: string[] | null
+          learnings_text?: string | null
           loss_factors?: string[] | null
           loss_reasons?: string | null
           offer_status?: Database["public"]["Enums"]["offer_status"] | null
@@ -127,6 +129,7 @@ export type Database = {
           id?: string
           industry?: string | null
           learnings?: string[] | null
+          learnings_text?: string | null
           loss_factors?: string[] | null
           loss_reasons?: string | null
           offer_status?: Database["public"]["Enums"]["offer_status"] | null
