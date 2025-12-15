@@ -1,11 +1,17 @@
-import { Settings, Database, Users, FileText, Palette } from 'lucide-react';
+import { Settings, Database, Users, FileText, Palette, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/knowledge/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { TemplateManager } from '@/components/settings/TemplateManager';
+import { StyleGuideManager } from '@/components/settings/StyleGuideManager';
 
 const SettingsPage = () => {
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [styleGuidesOpen, setStyleGuidesOpen] = useState(false);
+
   return (
     <MainLayout>
       <div className="p-6 max-w-3xl mx-auto fade-in">
@@ -80,43 +86,59 @@ const SettingsPage = () => {
           </Card>
 
           <Card className="border-border/60">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-muted-foreground" />
+            <Collapsible open={templatesOpen} onOpenChange={setTemplatesOpen}>
+              <CardHeader className="cursor-pointer" onClick={() => setTemplatesOpen(!templatesOpen)}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">Templates</CardTitle>
+                      <CardDescription>Manage offer templates for AI content generation</CardDescription>
+                    </div>
+                  </div>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      {templatesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
                 </div>
-                <div>
-                  <CardTitle className="text-base">Templates</CardTitle>
-                  <CardDescription>Manage offer templates and tone of voice</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Configure templates for offer writing and define your brand voice.
-              </p>
-              <Button variant="outline" size="sm">Manage Templates</Button>
-            </CardContent>
+              </CardHeader>
+              <CollapsibleContent>
+                <CardContent>
+                  <TemplateManager />
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
 
           <Card className="border-border/60">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                  <Palette className="w-5 h-5 text-muted-foreground" />
+            <Collapsible open={styleGuidesOpen} onOpenChange={setStyleGuidesOpen}>
+              <CardHeader className="cursor-pointer" onClick={() => setStyleGuidesOpen(!styleGuidesOpen)}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                      <Palette className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">Style Guides</CardTitle>
+                      <CardDescription>Define tone of voice and writing guidelines</CardDescription>
+                    </div>
+                  </div>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      {styleGuidesOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
                 </div>
-                <div>
-                  <CardTitle className="text-base">Style Guides</CardTitle>
-                  <CardDescription>Define visual and brand guidelines</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Manage style guides, brand assets, and visual standards for consistent outputs.
-              </p>
-              <Button variant="outline" size="sm">Manage Style Guides</Button>
-            </CardContent>
+              </CardHeader>
+              <CollapsibleContent>
+                <CardContent>
+                  <StyleGuideManager />
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
         </div>
       </div>

@@ -260,6 +260,42 @@ export type Database = {
           },
         ]
       }
+      offer_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          extracted_structure: Json | null
+          file_name: string
+          file_url: string
+          id: string
+          name: string
+          placeholders: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          extracted_structure?: Json | null
+          file_name: string
+          file_url: string
+          id?: string
+          name: string
+          placeholders?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          extracted_structure?: Json | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          name?: string
+          placeholders?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       people_client_links: {
         Row: {
           client_id: string
@@ -424,6 +460,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      style_guides: {
+        Row: {
+          brand_colors: Json | null
+          created_at: string
+          description: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          name: string
+          tone_of_voice: string | null
+          typography_rules: Json | null
+          updated_at: string
+          writing_guidelines: string | null
+        }
+        Insert: {
+          brand_colors?: Json | null
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          name: string
+          tone_of_voice?: string | null
+          typography_rules?: Json | null
+          updated_at?: string
+          writing_guidelines?: string | null
+        }
+        Update: {
+          brand_colors?: Json | null
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          name?: string
+          tone_of_voice?: string | null
+          typography_rules?: Json | null
+          updated_at?: string
+          writing_guidelines?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
