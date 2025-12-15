@@ -491,6 +491,7 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
         insertData.offer_work_status = summary.offerWorkStatus || 'under_development';
         insertData.winning_strategy = summary.winningStrategy || null;
         insertData.loss_reasons = summary.lossReasons || null;
+        insertData.full_description = summary.fullDescription || null;
       } else if (summary.category === 'method') {
         insertData.use_cases = summary.useCases || [];
         insertData.field = summary.field || null;
