@@ -54,6 +54,7 @@ interface UploadedFile {
   content: string;
   type: string;
   isParsed?: boolean;
+  originalFile?: File; // Keep original file for storage upload
 }
 
 export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCategory }: AddEntryDialogProps) => {
@@ -290,7 +291,8 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
           name: file.name,
           content,
           type: file.type,
-          isParsed: true
+          isParsed: true,
+          originalFile: file,
         }]);
         setProcessingStatus('');
       } catch (error) {
@@ -315,7 +317,8 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
           name: file.name,
           content,
           type: file.type,
-          isParsed: true
+          isParsed: true,
+          originalFile: file,
         }]);
         setProcessingStatus('');
       } catch (error) {
@@ -329,7 +332,7 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
     }
     
     // Reset input
-    e.target.value = '';
+    e.target.value = ''
   };
 
   const removeFile = (index: number) => {
@@ -447,6 +450,37 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
     setIsSaving(true);
 
     try {
+      // Upload files to storage and collect URLs
+      const fileUrls: string[] = [];
+      if (uploadedFiles.length > 0) {
+        setProcessingStatus('Uploading files...');
+        for (const uploadedFile of uploadedFiles) {
+          if (uploadedFile.originalFile) {
+            const timestamp = Date.now();
+            const sanitizedName = uploadedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const filePath = `imports/${timestamp}_${sanitizedName}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('knowledge')
+              .upload(filePath, uploadedFile.originalFile);
+            
+            if (uploadError) {
+              console.error('File upload error:', uploadError);
+              // Continue with other files even if one fails
+            } else {
+              const { data: urlData } = supabase.storage
+                .from('knowledge')
+                .getPublicUrl(filePath);
+              
+              if (urlData?.publicUrl) {
+                fileUrls.push(urlData.publicUrl);
+              }
+            }
+          }
+        }
+        setProcessingStatus('');
+      }
+
       // If creating a project or offer with a client name, ensure the client exists
       let clientId: string | null = null;
       if ((summary.category === 'project' || summary.category === 'offer') && summary.client?.trim()) {
@@ -477,6 +511,9 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
         }
       }
 
+      // Combine existing references with uploaded file URLs
+      const allReferences = [...(summary.referencesLinks || []), ...fileUrls];
+
       const insertData: Record<string, any> = {
         category: summary.category,
         title: summary.title,
@@ -488,7 +525,7 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
 
       if (summary.category === 'project') {
         insertData.project_status = summary.projectStatus || 'active';
-        insertData.references_links = summary.referencesLinks || [];
+        insertData.references_links = allReferences;
         insertData.full_description = summary.fullDescription || null;
         // learnings is now a text field, not auto-generated
       } else if (summary.category === 'offer') {
@@ -497,12 +534,13 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
         insertData.winning_strategy = summary.winningStrategy || null;
         insertData.loss_reasons = summary.lossReasons || null;
         insertData.full_description = summary.fullDescription || null;
+        insertData.references_links = allReferences;
       } else if (summary.category === 'method') {
         insertData.use_cases = summary.useCases || [];
         insertData.field = summary.field || null;
         insertData.domain = summary.domain || null;
         insertData.full_description = summary.fullDescription || null;
-        insertData.references_links = summary.referencesLinks || [];
+        insertData.references_links = allReferences;
       } else if (summary.category === 'person') {
         insertData.studio = summary.studio || null;
         insertData.position = summary.position || null;
