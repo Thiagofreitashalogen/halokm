@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor, RichTextViewer } from '@/components/ui/rich-text-editor';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
@@ -1952,16 +1953,14 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 Full Description
               </h4>
               {isEditing ? (
-                <Textarea
-                  value={editData.fullDescription || ''}
-                  onChange={(e) => updateField('fullDescription', e.target.value)}
-                  className="min-h-[120px] resize-none"
+                <RichTextEditor
+                  content={editData.fullDescription || ''}
+                  onChange={(content) => updateField('fullDescription', content)}
                   placeholder="Detailed description of the method..."
+                  className="min-h-[200px]"
                 />
               ) : entry.fullDescription ? (
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {entry.fullDescription}
-                </p>
+                <RichTextViewer content={entry.fullDescription} />
               ) : (
                 <p className="text-sm text-muted-foreground">No full description provided</p>
               )}
