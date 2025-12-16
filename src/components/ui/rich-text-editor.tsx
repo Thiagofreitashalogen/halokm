@@ -11,6 +11,7 @@ import {
   Italic, 
   Underline as UnderlineIcon, 
   Link as LinkIcon,
+  Unlink,
   Heading1,
   Heading2,
   Heading3,
@@ -122,17 +123,47 @@ export function RichTextEditor({
   const setLink = useCallback(() => {
     if (!editor) return;
     
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('Enter URL:', previousUrl);
+    const { from, to } = editor.state.selection;
+    const hasSelection = from !== to;
+    const isCurrentlyLink = editor.isActive('link');
     
-    if (url === null) return;
-    
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    // If already a link and no text selected, offer to remove
+    if (isCurrentlyLink && !hasSelection) {
+      const shouldRemove = window.confirm('Remove this link?');
+      if (shouldRemove) {
+        editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      }
       return;
     }
     
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    // If already a link with selection, remove link from selection
+    if (isCurrentlyLink && hasSelection) {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+    
+    // No selection - can't create a link without selected text
+    if (!hasSelection) {
+      alert('Please select some text first to create a link.');
+      return;
+    }
+    
+    const url = window.prompt('Enter URL:');
+    
+    if (url === null || url === '') return;
+    
+    // Set link only on selected text, then move cursor to end
+    editor
+      .chain()
+      .focus()
+      .setLink({ href: url })
+      .setTextSelection(to)
+      .run();
+  }, [editor]);
+
+  const removeLink = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
   }, [editor]);
 
   if (!editor) return null;
@@ -223,10 +254,22 @@ export function RichTextEditor({
           size="sm"
           onClick={setLink}
           className={cn("h-7 w-7 p-0", editor.isActive('link') && "bg-muted")}
-          title="Add link"
+          title="Add link (select text first)"
         >
           <LinkIcon className="w-4 h-4" />
         </Button>
+        {editor.isActive('link') && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={removeLink}
+            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+            title="Remove link"
+          >
+            <Unlink className="w-4 h-4" />
+          </Button>
+        )}
         <Button
           type="button"
           variant="ghost"
