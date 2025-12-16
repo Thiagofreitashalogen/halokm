@@ -56,18 +56,61 @@ Respond ONLY with a valid JSON object in this exact format:
   // For projects (do NOT extract methods - users will add these manually):
   "deliverables": ["Deliverable 1", "Deliverable 2"],
   "projectStatus": "active" | "completed" | "archived",
-  "fullDescription": "A detailed summary of the project content (max 2000 words). This should comprehensively cover: 1) Project goals and objectives, 2) Methods and tools used, 3) Process and activities undertaken, 4) Deliverables produced, 5) Outcomes and results achieved.",
+  "fullDescription": "<HTML formatted detailed summary>",
   
   // For offers:
   "offerStatus": "draft" | "pending" | "won" | "lost",
   "winFactors": ["Factor that helped win"],
   "lossFactors": ["Reason for losing"],
-  "fullDescription": "A detailed summary of the offer content (max 2000 words). This should comprehensively cover the uploaded content, including the offer's goals, scope, proposed approach, methodology, key differentiators, and any other relevant details from the source material.",
+  "fullDescription": "<HTML formatted detailed summary>",
   
   // For methods:
   "useCases": ["When to use this", "Another use case"],
-  "steps": ["Step 1", "Step 2"]
+  "steps": ["Step 1", "Step 2"],
+  "fullDescription": "<HTML formatted detailed summary>"
 }
+
+IMPORTANT - HTML FORMATTING FOR fullDescription:
+The fullDescription field MUST be formatted as HTML with proper structure. Use these tags:
+- <h2>Section Title</h2> for main sections
+- <h3>Subsection</h3> for subsections
+- <p>Paragraph text</p> for paragraphs
+- <strong>bold text</strong> for emphasis
+- <em>italic text</em> for emphasis
+- <ul><li>item</li></ul> for bullet lists
+
+Example structure for a PROJECT fullDescription:
+<h2>Project Overview</h2>
+<p>Brief introduction to the project goals and context.</p>
+
+<h2>Objectives</h2>
+<p>What the project aimed to achieve...</p>
+
+<h2>Process & Methodology</h2>
+<p>Description of the approach taken...</p>
+
+<h2>Deliverables & Outcomes</h2>
+<p>What was produced and the results achieved...</p>
+
+Example structure for an OFFER fullDescription:
+<h2>Opportunity Overview</h2>
+<p>Context about the tender/proposal...</p>
+
+<h2>Proposed Approach</h2>
+<p>The methodology and strategy proposed...</p>
+
+<h2>Key Differentiators</h2>
+<p>What made this offer stand out...</p>
+
+Example structure for a METHOD fullDescription:
+<h2>Overview</h2>
+<p>What this method/tool is about...</p>
+
+<h2>How It Works</h2>
+<p>Detailed explanation of the process...</p>
+
+<h2>Benefits</h2>
+<p>Why and when to use this method...</p>
 
 ${suggestedCategory ? `The user indicated this might be a "${suggestedCategory}", but override if the content clearly indicates otherwise.` : ''}
 
@@ -77,7 +120,7 @@ Important:
 - Always return valid JSON
 - Infer the most likely category from the content
 - Extract as many relevant tags as possible for searchability
-- For both projects and offers, the "fullDescription" field should be a comprehensive summary (up to 2000 words) that captures the key content from the uploaded documents`;
+- The fullDescription MUST be HTML formatted with proper semantic structure`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

@@ -43,7 +43,7 @@ ${miroContent || 'No content provided'}
 
 Your task is to analyze the provided content and extract:
 1. A SHORT SUMMARY: Maximum 3 paragraphs that concisely summarize what the project was about
-2. A DETAILED SUMMARY: Up to 2000 words covering:
+2. A DETAILED SUMMARY: HTML formatted content covering:
    - Goals and objectives of the project
    - The process followed
    - Methods and tools used
@@ -55,7 +55,7 @@ Respond ONLY with a valid JSON object in this exact format:
 {
   "title": "Project title inferred from content",
   "description": "A short summary in maximum 3 paragraphs",
-  "full_description": "A detailed summary up to 2000 words covering goals/objectives, process, methods/tools, and deliverables",
+  "full_description": "<HTML formatted detailed summary>",
   "client": "Client name if mentioned, or null",
   "deliverables": ["Deliverable 1", "Deliverable 2"],
   "methods": ["Method 1", "Tool 2", "Framework 3"],
@@ -63,7 +63,29 @@ Respond ONLY with a valid JSON object in this exact format:
   "learnings": ["Key learning 1", "Key learning 2"]
 }
 
-If you cannot extract certain information, use empty arrays or null. Always return valid JSON.`
+IMPORTANT - HTML FORMATTING FOR full_description:
+The full_description field MUST be formatted as HTML with proper structure. Use these tags:
+- <h2>Section Title</h2> for main sections
+- <h3>Subsection</h3> for subsections
+- <p>Paragraph text</p> for paragraphs
+- <strong>bold text</strong> for emphasis
+- <em>italic text</em> for emphasis
+- <ul><li>item</li></ul> for bullet lists
+
+Example structure:
+<h2>Project Overview</h2>
+<p>Brief introduction to the project goals and context.</p>
+
+<h2>Goals & Objectives</h2>
+<p>What the project aimed to achieve...</p>
+
+<h2>Process & Methodology</h2>
+<p>Description of the approach and methods used...</p>
+
+<h2>Deliverables & Outcomes</h2>
+<p>What was produced and the results achieved...</p>
+
+If you cannot extract certain information, use empty arrays or null. Always return valid JSON with HTML-formatted full_description.`
           },
           {
             role: 'user',
