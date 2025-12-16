@@ -71,6 +71,11 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
   const [linkedPersonClients, setLinkedPersonClients] = useState<{id: string; title: string}[]>([]);
   const [linkedPersonMethods, setLinkedPersonMethods] = useState<{id: string; title: string}[]>([]);
   
+  // Linked entities for method view (reverse relationships)
+  const [linkedMethodProjects, setLinkedMethodProjects] = useState<{id: string; title: string}[]>([]);
+  const [linkedMethodOffers, setLinkedMethodOffers] = useState<{id: string; title: string}[]>([]);
+  const [linkedMethodPeople, setLinkedMethodPeople] = useState<{id: string; title: string}[]>([]);
+  
   // Edit state for client linked entities
   const [editLinkedProjectIds, setEditLinkedProjectIds] = useState<string[]>([]);
   const [editLinkedPeopleIds, setEditLinkedPeopleIds] = useState<string[]>([]);
@@ -304,6 +309,60 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
           setLinkedPersonMethods([]);
         }
       }
+      
+      // Method: fetch linked projects, offers, and people with this expertise
+      if (entry.category === 'method') {
+        // Fetch linked projects via project_method_links
+        const { data: projectLinks } = await supabase
+          .from('project_method_links')
+          .select('project_id')
+          .eq('method_id', entry.id);
+        
+        if (projectLinks && projectLinks.length > 0) {
+          const projectIds = projectLinks.map(l => l.project_id);
+          const { data: projects } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', projectIds);
+          setLinkedMethodProjects(projects || []);
+        } else {
+          setLinkedMethodProjects([]);
+        }
+        
+        // Fetch linked offers via offer_method_links
+        const { data: offerLinks } = await supabase
+          .from('offer_method_links')
+          .select('offer_id')
+          .eq('method_id', entry.id);
+        
+        if (offerLinks && offerLinks.length > 0) {
+          const offerIds = offerLinks.map(l => l.offer_id);
+          const { data: offers } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', offerIds);
+          setLinkedMethodOffers(offers || []);
+        } else {
+          setLinkedMethodOffers([]);
+        }
+        
+        // Fetch people with this method expertise via people_method_expertise
+        const { data: peopleLinks } = await supabase
+          .from('people_method_expertise')
+          .select('person_id')
+          .eq('method_id', entry.id);
+        
+        if (peopleLinks && peopleLinks.length > 0) {
+          const peopleIds = peopleLinks.map(l => l.person_id);
+          const { data: people } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', peopleIds);
+          setLinkedMethodPeople(people || []);
+        } else {
+          setLinkedMethodPeople([]);
+        }
+      }
     };
     
     // Reset edit state when entry changes
@@ -319,6 +378,9 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
     setLinkedPersonOffers([]);
     setLinkedPersonClients([]);
     setLinkedPersonMethods([]);
+    setLinkedMethodProjects([]);
+    setLinkedMethodOffers([]);
+    setLinkedMethodPeople([]);
     
     fetchLinkedEntities();
   }, [entry?.id, open]);
@@ -1998,6 +2060,80 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
             </div>
           )}
 
+          {/* Method specific: Linked Projects */}
+          {entry.category === 'method' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <FolderKanban className="w-4 h-4 text-category-project" />
+                Used in Projects
+              </h4>
+              {linkedMethodProjects.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedMethodProjects.map((project) => (
+                    <LinkedEntityBadge 
+                      key={project.id} 
+                      id={project.id} 
+                      title={project.title} 
+                      category="project"
+                      onClick={() => onNavigateToEntry?.(project.id)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Not used in any projects yet</p>
+              )}
+            </div>
+          )}
+
+          {/* Method specific: Linked Offers */}
+          {entry.category === 'method' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-category-offer" />
+                Used in Offers
+              </h4>
+              {linkedMethodOffers.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedMethodOffers.map((offer) => (
+                    <LinkedEntityBadge 
+                      key={offer.id} 
+                      id={offer.id} 
+                      title={offer.title} 
+                      category="offer"
+                      onClick={() => onNavigateToEntry?.(offer.id)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Not used in any offers yet</p>
+              )}
+            </div>
+          )}
+
+          {/* Method specific: People with Expertise */}
+          {entry.category === 'method' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-category-person" />
+                People with Expertise
+              </h4>
+              {linkedMethodPeople.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedMethodPeople.map((person) => (
+                    <LinkedEntityBadge 
+                      key={person.id} 
+                      id={person.id} 
+                      title={person.title} 
+                      category="person"
+                      onClick={() => onNavigateToEntry?.(person.id)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No people linked with this expertise</p>
+              )}
+            </div>
+          )}
 
           {/* Method specific: References */}
           {entry.category === 'method' && (
