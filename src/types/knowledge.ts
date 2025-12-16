@@ -17,6 +17,7 @@ export interface KnowledgeEntry {
   client?: string;
   projectStatus?: ProjectStatus;
   startDate?: Date;
+  endDate?: Date;
   dateDelivered?: Date;
   learnings?: string[]; // Legacy array field
   learningsText?: string; // New text field for learnings

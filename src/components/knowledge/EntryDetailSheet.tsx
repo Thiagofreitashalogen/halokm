@@ -18,8 +18,11 @@ import { RichTextEditor, RichTextViewer } from '@/components/ui/rich-text-editor
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink, FolderKanban, Users, Wrench, FileText, Tag, Briefcase, MapPin, Factory, BookOpen, Target, Upload, Sparkles, File } from 'lucide-react';
+import { Building2, Calendar, CheckCircle, XCircle, Lightbulb, Pencil, X, Save, Loader2, Plus, Link2, ExternalLink, FolderKanban, Users, Wrench, FileText, Tag, Briefcase, MapPin, Factory, BookOpen, Target, Upload, Sparkles, File, CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -609,6 +612,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
       studio: entry.studio || '',
       position: entry.position || '',
       industry: entry.industry || '',
+      startDate: entry.startDate,
+      endDate: entry.endDate,
     });
     // Initialize linked entity IDs for clients
     if (entry.category === 'client') {
@@ -662,6 +667,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
         updateData.references_links = editData.referencesLinks || [];
         updateData.full_description = editData.fullDescription || null;
         updateData.learnings = editData.learnings || [];
+        updateData.start_date = editData.startDate ? format(editData.startDate, 'yyyy-MM-dd') : null;
+        updateData.end_date = editData.endDate ? format(editData.endDate, 'yyyy-MM-dd') : null;
       } else if (entry.category === 'offer') {
         updateData.offer_status = editData.offerStatus;
         updateData.offer_work_status = editData.offerWorkStatus;
@@ -1078,17 +1085,76 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                     {linkedOfferClient?.title || entry.client || <span className="italic text-muted-foreground/70">No client</span>}
                   </span>
                 )}
-                {entry.startDate && (
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4" />
-                    Started {format(entry.startDate, 'MMM d, yyyy')}
-                  </span>
-                )}
-                {entry.dateDelivered && (
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4" />
-                    Delivered {format(entry.dateDelivered, 'MMM d, yyyy')}
-                  </span>
+                {entry.category === 'project' && isEditing ? (
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Started:</span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "h-7 w-[140px] justify-start text-left font-normal text-xs",
+                              !editData.startDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {editData.startDate ? format(editData.startDate, "MMM d, yyyy") : "Pick date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={editData.startDate}
+                            onSelect={(date) => updateField('startDate', date)}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Ended:</span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "h-7 w-[140px] justify-start text-left font-normal text-xs",
+                              !editData.endDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-1 h-3 w-3" />
+                            {editData.endDate ? format(editData.endDate, "MMM d, yyyy") : "Pick date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={editData.endDate}
+                            onSelect={(date) => updateField('endDate', date)}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {entry.startDate && (
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4" />
+                        Started {format(entry.startDate, 'MMM d, yyyy')}
+                      </span>
+                    )}
+                    {entry.endDate && (
+                      <span className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4" />
+                        Ended {format(entry.endDate, 'MMM d, yyyy')}
+                      </span>
+                    )}
+                  </>
                 )}
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />

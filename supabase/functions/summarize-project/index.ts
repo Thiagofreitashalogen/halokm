@@ -50,6 +50,8 @@ Your task is to analyze the provided content and extract:
    - What was delivered
 3. A list of deliverables (tangible outputs produced)
 4. Methods and tools used (design methods, frameworks, tools, techniques)
+5. Project start date (if mentioned in the documentation)
+6. Project end date (if mentioned in the documentation)
 
 Respond ONLY with a valid JSON object in this exact format:
 {
@@ -60,8 +62,17 @@ Respond ONLY with a valid JSON object in this exact format:
   "deliverables": ["Deliverable 1", "Deliverable 2"],
   "methods": ["Method 1", "Tool 2", "Framework 3"],
   "tags": ["relevant", "tags", "for", "categorization"],
-  "learnings": ["Key learning 1", "Key learning 2"]
+  "learnings": ["Key learning 1", "Key learning 2"],
+  "start_date": "YYYY-MM-DD format or null if not found",
+  "end_date": "YYYY-MM-DD format or null if not found"
 }
+
+IMPORTANT - DATE EXTRACTION:
+- Look for project start dates, kick-off dates, or when the project began
+- Look for project end dates, completion dates, delivery dates, or when the project finished
+- Format dates as YYYY-MM-DD (e.g., "2024-03-15")
+- If only a month/year is mentioned, use the 1st of the month (e.g., "March 2024" → "2024-03-01")
+- If no date information is found, use null
 
 IMPORTANT - HTML FORMATTING FOR full_description:
 The full_description field MUST be formatted as HTML with proper structure. Use these tags:
@@ -141,7 +152,9 @@ If you cannot extract certain information, use empty arrays or null. Always retu
         deliverables: [],
         methods: [],
         tags: [],
-        learnings: []
+        learnings: [],
+        start_date: null,
+        end_date: null
       };
     }
 

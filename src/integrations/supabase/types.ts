@@ -172,6 +172,7 @@ export type Database = {
           deliverables: string[] | null
           description: string | null
           domain: string | null
+          end_date: string | null
           field: string | null
           full_description: string | null
           id: string
@@ -206,6 +207,7 @@ export type Database = {
           deliverables?: string[] | null
           description?: string | null
           domain?: string | null
+          end_date?: string | null
           field?: string | null
           full_description?: string | null
           id?: string
@@ -240,6 +242,7 @@ export type Database = {
           deliverables?: string[] | null
           description?: string | null
           domain?: string | null
+          end_date?: string | null
           field?: string | null
           full_description?: string | null
           id?: string

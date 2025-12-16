@@ -43,6 +43,7 @@ export function useKnowledge(categoryFilter?: KnowledgeCategory) {
           offerStatus: row.offer_status || undefined,
           offerWorkStatus: row.offer_work_status || undefined,
           startDate: row.start_date ? new Date(row.start_date) : undefined,
+          endDate: row.end_date ? new Date(row.end_date) : undefined,
           dateDelivered: row.date_delivered ? new Date(row.date_delivered) : undefined,
           deliverables: row.deliverables || undefined,
           learnings: row.learnings || undefined,
