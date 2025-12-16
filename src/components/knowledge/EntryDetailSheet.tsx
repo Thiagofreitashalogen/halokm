@@ -1516,16 +1516,14 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 Detailed Summary
               </h4>
               {isEditing ? (
-                <Textarea
-                  value={editData.fullDescription || ''}
-                  onChange={(e) => updateField('fullDescription', e.target.value)}
-                  className="min-h-[300px] resize-y"
-                  placeholder="Enter a detailed summary of the project (max 2000 words). Include: goals and objectives, methods and tools used, process and activities, deliverables, and outcomes..."
+                <RichTextEditor
+                  content={editData.fullDescription || ''}
+                  onChange={(content) => updateField('fullDescription', content)}
+                  placeholder="Enter a detailed summary of the project. Include: goals and objectives, methods and tools used, process and activities, deliverables, and outcomes..."
+                  className="min-h-[300px]"
                 />
               ) : entry.fullDescription ? (
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {entry.fullDescription}
-                </p>
+                <RichTextViewer content={entry.fullDescription} />
               ) : (
                 <p className="text-sm text-muted-foreground">No detailed summary recorded</p>
               )}
@@ -1605,16 +1603,14 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 Detailed Summary
               </h4>
               {isEditing ? (
-                <Textarea
-                  value={editData.fullDescription || ''}
-                  onChange={(e) => updateField('fullDescription', e.target.value)}
-                  className="min-h-[300px] resize-y"
-                  placeholder="Enter a detailed summary of the offer content (max 2000 words)..."
+                <RichTextEditor
+                  content={editData.fullDescription || ''}
+                  onChange={(content) => updateField('fullDescription', content)}
+                  placeholder="Enter a detailed summary of the offer content..."
+                  className="min-h-[300px]"
                 />
               ) : entry.fullDescription ? (
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {entry.fullDescription}
-                </p>
+                <RichTextViewer content={entry.fullDescription} />
               ) : (
                 <p className="text-sm text-muted-foreground">No detailed summary recorded</p>
               )}
