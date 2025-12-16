@@ -88,6 +88,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
   const [editLinkedOfferMethodIds, setEditLinkedOfferMethodIds] = useState<string[]>([]);
   const [editLinkedOfferPeopleIds, setEditLinkedOfferPeopleIds] = useState<string[]>([]);
   const [editLinkedOfferClientId, setEditLinkedOfferClientId] = useState<string | null>(null);
+  
+  // Edit state for method linked entities
+  const [editLinkedMethodOfferIds, setEditLinkedMethodOfferIds] = useState<string[]>([]);
+  const [editLinkedMethodPeopleIds, setEditLinkedMethodPeopleIds] = useState<string[]>([]);
 
   // Fetch linked entities when viewing a client or project
   useEffect(() => {
@@ -381,6 +385,8 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
     setLinkedMethodProjects([]);
     setLinkedMethodOffers([]);
     setLinkedMethodPeople([]);
+    setEditLinkedMethodOfferIds([]);
+    setEditLinkedMethodPeopleIds([]);
     
     fetchLinkedEntities();
   }, [entry?.id, open]);
@@ -411,7 +417,15 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
         setEditLinkedOfferPeopleIds(linkedOfferPeople.map(p => p.id));
       }
     }
-  }, [isEditing, linkedMethods, linkedProjectPeople, linkedProjects, linkedPeople, linkedOfferMethods, linkedOfferPeople, entry?.category]);
+    if (isEditing && entry?.category === 'method') {
+      if (linkedMethodOffers.length > 0 && editLinkedMethodOfferIds.length === 0) {
+        setEditLinkedMethodOfferIds(linkedMethodOffers.map(o => o.id));
+      }
+      if (linkedMethodPeople.length > 0 && editLinkedMethodPeopleIds.length === 0) {
+        setEditLinkedMethodPeopleIds(linkedMethodPeople.map(p => p.id));
+      }
+    }
+  }, [isEditing, linkedMethods, linkedProjectPeople, linkedProjects, linkedPeople, linkedOfferMethods, linkedOfferPeople, linkedMethodOffers, linkedMethodPeople, entry?.category]);
 
   // Fetch uploaded documents for offers
   useEffect(() => {
@@ -810,6 +824,41 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
             .insert({
               offer_id: entry.id,
               person_id: personId,
+            });
+        }
+      }
+
+      // Handle method-offer and method-people linking
+      if (entry.category === 'method') {
+        // Remove existing offer links
+        await supabase
+          .from('offer_method_links')
+          .delete()
+          .eq('method_id', entry.id);
+
+        // Add new offer links
+        for (const offerId of editLinkedMethodOfferIds) {
+          await supabase
+            .from('offer_method_links')
+            .insert({
+              offer_id: offerId,
+              method_id: entry.id,
+            });
+        }
+
+        // Remove existing people expertise links
+        await supabase
+          .from('people_method_expertise')
+          .delete()
+          .eq('method_id', entry.id);
+
+        // Add new people expertise links
+        for (const personId of editLinkedMethodPeopleIds) {
+          await supabase
+            .from('people_method_expertise')
+            .insert({
+              person_id: personId,
+              method_id: entry.id,
             });
         }
       }
@@ -2092,7 +2141,57 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 <FileText className="w-4 h-4 text-category-offer" />
                 Used in Offers
               </h4>
-              {linkedMethodOffers.length > 0 ? (
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editLinkedMethodOfferIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {editLinkedMethodOfferIds.map((offerId) => {
+                        const offer = linkedMethodOffers.find(o => o.id === offerId);
+                        return (
+                          <Badge 
+                            key={offerId} 
+                            variant="secondary" 
+                            className="font-normal pr-1 gap-1 group"
+                          >
+                            {offer?.title || 'Loading...'}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditLinkedMethodOfferIds(ids => ids.filter(id => id !== offerId));
+                                setLinkedMethodOffers(prev => prev.filter(o => o.id !== offerId));
+                              }}
+                              className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5 transition-colors"
+                              aria-label="Remove offer"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <EntityAutocomplete
+                    category="offer"
+                    value=""
+                    onChange={(_, entityId) => {
+                      if (entityId && !editLinkedMethodOfferIds.includes(entityId)) {
+                        setEditLinkedMethodOfferIds(ids => [...ids, entityId]);
+                        supabase
+                          .from('knowledge_entries')
+                          .select('id, title')
+                          .eq('id', entityId)
+                          .single()
+                          .then(({ data }) => {
+                            if (data) {
+                              setLinkedMethodOffers(prev => [...prev, data]);
+                            }
+                          });
+                      }
+                    }}
+                    placeholder="Search offers to link..."
+                  />
+                </div>
+              ) : linkedMethodOffers.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedMethodOffers.map((offer) => (
                     <LinkedEntityBadge 
@@ -2117,7 +2216,57 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                 <Users className="w-4 h-4 text-category-person" />
                 People with Expertise
               </h4>
-              {linkedMethodPeople.length > 0 ? (
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editLinkedMethodPeopleIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {editLinkedMethodPeopleIds.map((personId) => {
+                        const person = linkedMethodPeople.find(p => p.id === personId);
+                        return (
+                          <Badge 
+                            key={personId} 
+                            variant="secondary" 
+                            className="font-normal pr-1 gap-1 group"
+                          >
+                            {person?.title || 'Loading...'}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditLinkedMethodPeopleIds(ids => ids.filter(id => id !== personId));
+                                setLinkedMethodPeople(prev => prev.filter(p => p.id !== personId));
+                              }}
+                              className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5 transition-colors"
+                              aria-label="Remove person"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <EntityAutocomplete
+                    category="person"
+                    value=""
+                    onChange={(_, entityId) => {
+                      if (entityId && !editLinkedMethodPeopleIds.includes(entityId)) {
+                        setEditLinkedMethodPeopleIds(ids => [...ids, entityId]);
+                        supabase
+                          .from('knowledge_entries')
+                          .select('id, title')
+                          .eq('id', entityId)
+                          .single()
+                          .then(({ data }) => {
+                            if (data) {
+                              setLinkedMethodPeople(prev => [...prev, data]);
+                            }
+                          });
+                      }
+                    }}
+                    placeholder="Search people to link..."
+                  />
+                </div>
+              ) : linkedMethodPeople.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {linkedMethodPeople.map((person) => (
                     <LinkedEntityBadge 
