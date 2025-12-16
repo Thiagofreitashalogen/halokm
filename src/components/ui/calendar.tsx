@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-function Calendar({ className, classNames, showOutsideDays = true, captionLayout = "dropdown-buttons", fromYear = 1990, toYear = new Date().getFullYear() + 5, ...props }: CalendarProps) {
+function Calendar({ className, classNames, showOutsideDays = true, captionLayout = "dropdown-buttons", fromYear = 2010, toYear = 2030, ...props }: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
