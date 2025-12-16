@@ -1029,20 +1029,76 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
           {/* Meta info */}
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             {isEditing && entry.category === 'project' ? (
-              <div className="w-full space-y-2">
-                <Label className="text-xs">Client</Label>
-                <EntityAutocomplete
-                  category="client"
-                  value={editData.client || ''}
-                  onChange={(value, entityId) => {
-                    updateField('client', value);
-                    // Store the client ID for linking
-                    if (entityId) {
-                      updateField('clientIds', [entityId]);
-                    }
-                  }}
-                  placeholder="Search or create client..."
-                />
+              <div className="w-full space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Client</Label>
+                  <EntityAutocomplete
+                    category="client"
+                    value={editData.client || ''}
+                    onChange={(value, entityId) => {
+                      updateField('client', value);
+                      // Store the client ID for linking
+                      if (entityId) {
+                        updateField('clientIds', [entityId]);
+                      }
+                    }}
+                    placeholder="Search or create client..."
+                  />
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Started:</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "h-7 w-[140px] justify-start text-left font-normal text-xs",
+                            !editData.startDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-1 h-3 w-3" />
+                          {editData.startDate ? format(editData.startDate, "MMM d, yyyy") : "Pick date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={editData.startDate}
+                          onSelect={(date) => updateField('startDate', date)}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Ended:</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "h-7 w-[140px] justify-start text-left font-normal text-xs",
+                            !editData.endDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-1 h-3 w-3" />
+                          {editData.endDate ? format(editData.endDate, "MMM d, yyyy") : "Pick date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={editData.endDate}
+                          onSelect={(date) => updateField('endDate', date)}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               </div>
             ) : isEditing && entry.category === 'offer' ? (
               <div className="w-full space-y-2">
@@ -1085,76 +1141,17 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
                     {linkedOfferClient?.title || entry.client || <span className="italic text-muted-foreground/70">No client</span>}
                   </span>
                 )}
-                {entry.category === 'project' && isEditing ? (
-                  <div className="flex flex-wrap gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Started:</span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "h-7 w-[140px] justify-start text-left font-normal text-xs",
-                              !editData.startDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-1 h-3 w-3" />
-                            {editData.startDate ? format(editData.startDate, "MMM d, yyyy") : "Pick date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <CalendarComponent
-                            mode="single"
-                            selected={editData.startDate}
-                            onSelect={(date) => updateField('startDate', date)}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Ended:</span>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "h-7 w-[140px] justify-start text-left font-normal text-xs",
-                              !editData.endDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-1 h-3 w-3" />
-                            {editData.endDate ? format(editData.endDate, "MMM d, yyyy") : "Pick date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <CalendarComponent
-                            mode="single"
-                            selected={editData.endDate}
-                            onSelect={(date) => updateField('endDate', date)}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {entry.startDate && (
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4" />
-                        Started {format(entry.startDate, 'MMM d, yyyy')}
-                      </span>
-                    )}
-                    {entry.endDate && (
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4" />
-                        Ended {format(entry.endDate, 'MMM d, yyyy')}
-                      </span>
-                    )}
-                  </>
+                {entry.startDate && (
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" />
+                    Started {format(entry.startDate, 'MMM d, yyyy')}
+                  </span>
+                )}
+                {entry.endDate && (
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" />
+                    Ended {format(entry.endDate, 'MMM d, yyyy')}
+                  </span>
                 )}
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
