@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { KnowledgeCategory } from '@/types/knowledge';
-import { FolderOpen, FileText, Lightbulb, Building2, UserCircle } from 'lucide-react';
+import { FolderOpen, FileText, Lightbulb, Building2, UserCircle, Globe } from 'lucide-react';
 
 interface CategoryBadgeProps {
   category: KnowledgeCategory;
@@ -32,6 +32,11 @@ const categoryConfig: Record<KnowledgeCategory, { label: string; icon: typeof Fo
     label: 'Person',
     icon: UserCircle,
     className: 'bg-category-person/10 text-category-person border-category-person/20',
+  },
+  market: {
+    label: 'Market',
+    icon: Globe,
+    className: 'bg-category-market/10 text-category-market border-category-market/20',
   },
 };
 

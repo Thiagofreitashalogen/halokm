@@ -1,4 +1,4 @@
-import { Database, FileText, Lightbulb, FolderOpen, Search, Settings, Sparkles, Users, UserCircle, LogOut, Brain, PenTool } from 'lucide-react';
+import { Database, FileText, Lightbulb, FolderOpen, Search, Settings, Sparkles, Users, UserCircle, LogOut, Brain, PenTool, Globe } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { logout } from '@/pages/LoginPage';
@@ -21,6 +21,7 @@ const mainNavItems = [
   { title: 'Offers', url: '/offers', icon: FileText },
   { title: 'Projects', url: '/projects', icon: FolderOpen },
   { title: 'Clients', url: '/clients', icon: Users },
+  { title: 'Markets', url: '/markets', icon: Globe },
   { title: 'Methods & Tools', url: '/methods', icon: Lightbulb },
   { title: 'People', url: '/people', icon: UserCircle },
 ];

@@ -271,6 +271,48 @@ export type Database = {
         }
         Relationships: []
       }
+      market_client_links: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          market_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          market_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          market_id?: string
+        }
+        Relationships: []
+      }
+      market_project_links: {
+        Row: {
+          created_at: string
+          id: string
+          market_id: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_id: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_id?: string
+          project_id?: string
+        }
+        Relationships: []
+      }
       offer_client_links: {
         Row: {
           client_id: string
@@ -630,7 +672,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      knowledge_category: "project" | "offer" | "method" | "client" | "person"
+      knowledge_category:
+        | "project"
+        | "offer"
+        | "method"
+        | "client"
+        | "person"
+        | "market"
       offer_status: "draft" | "pending" | "won" | "lost"
       offer_work_status: "under_development" | "delivered"
       project_status: "active" | "completed" | "archived"
@@ -761,7 +809,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      knowledge_category: ["project", "offer", "method", "client", "person"],
+      knowledge_category: [
+        "project",
+        "offer",
+        "method",
+        "client",
+        "person",
+        "market",
+      ],
       offer_status: ["draft", "pending", "won", "lost"],
       offer_work_status: ["under_development", "delivered"],
       project_status: ["active", "completed", "archived"],
