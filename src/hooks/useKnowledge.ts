@@ -111,6 +111,7 @@ export function useKnowledge(categoryFilter?: KnowledgeCategory) {
       projects: entries.filter((e) => e.category === 'project').length,
       offers: entries.filter((e) => e.category === 'offer').length,
       methods: entries.filter((e) => e.category === 'method').length,
+      markets: entries.filter((e) => e.category === 'market').length,
       wonOffers: entries.filter((e) => e.offerStatus === 'won').length,
       lostOffers: entries.filter((e) => e.offerStatus === 'lost').length,
     };

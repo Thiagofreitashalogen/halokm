@@ -11,6 +11,7 @@ import OffersPage from "./pages/OffersPage";
 import MethodsPage from "./pages/MethodsPage";
 import ClientsPage from "./pages/ClientsPage";
 import PeoplePage from "./pages/PeoplePage";
+import MarketsPage from "./pages/MarketsPage";
 import SearchPage from "./pages/SearchPage";
 import SmartSearchPage from "./pages/SmartSearchPage";
 import ContentStudioPage from "./pages/ContentStudioPage";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/offers" element={<ProtectedRoute><OffersPage /></ProtectedRoute>} />
             <Route path="/methods" element={<ProtectedRoute><MethodsPage /></ProtectedRoute>} />
             <Route path="/clients" element={<ProtectedRoute><ClientsPage /></ProtectedRoute>} />
+            <Route path="/markets" element={<ProtectedRoute><MarketsPage /></ProtectedRoute>} />
             <Route path="/people" element={<ProtectedRoute><PeoplePage /></ProtectedRoute>} />
             <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
             <Route path="/smart-search" element={<ProtectedRoute><SmartSearchPage /></ProtectedRoute>} />

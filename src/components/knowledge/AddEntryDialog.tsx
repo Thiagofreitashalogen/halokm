@@ -861,13 +861,14 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="project">Project</SelectItem>
-                    <SelectItem value="offer">Offer</SelectItem>
-                    <SelectItem value="method">Method & Tool</SelectItem>
-                    <SelectItem value="client">Client</SelectItem>
-                    <SelectItem value="person">Person</SelectItem>
-                  </SelectContent>
+                <SelectContent>
+                  <SelectItem value="project">Project</SelectItem>
+                  <SelectItem value="offer">Offer</SelectItem>
+                  <SelectItem value="method">Method & Tool</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="person">Person</SelectItem>
+                  <SelectItem value="market">Market</SelectItem>
+                </SelectContent>
                 </Select>
               </div>
 
@@ -907,13 +908,14 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="project">Project</SelectItem>
-                  <SelectItem value="offer">Offer</SelectItem>
-                  <SelectItem value="method">Method & Tool</SelectItem>
-                  <SelectItem value="client">Client</SelectItem>
-                  <SelectItem value="person">Person</SelectItem>
-                </SelectContent>
+              <SelectContent>
+                <SelectItem value="project">Project</SelectItem>
+                <SelectItem value="offer">Offer</SelectItem>
+                <SelectItem value="method">Method & Tool</SelectItem>
+                <SelectItem value="client">Client</SelectItem>
+                <SelectItem value="person">Person</SelectItem>
+                <SelectItem value="market">Market</SelectItem>
+              </SelectContent>
               </Select>
               {tabMode === 'upload' && (
                 <p className="text-xs text-muted-foreground">

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { KnowledgeEntry, KnowledgeCategory } from '@/types/knowledge';
 import { CategoryBadge } from './CategoryBadge';
 import { StatusBadge } from './StatusBadge';
-import { EntityAutocomplete } from './EntityAutocomplete';
+import { EntityAutocomplete, MultiEntityAutocomplete } from './EntityAutocomplete';
 import { LinkedEntityBadge } from './LinkedEntityBadge';
 import {
   Sheet,
@@ -79,6 +79,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
   const [linkedMethodOffers, setLinkedMethodOffers] = useState<{id: string; title: string}[]>([]);
   const [linkedMethodPeople, setLinkedMethodPeople] = useState<{id: string; title: string}[]>([]);
   
+  // Linked entities for market view
+  const [linkedMarketClients, setLinkedMarketClients] = useState<{id: string; title: string}[]>([]);
+  const [linkedMarketProjects, setLinkedMarketProjects] = useState<{id: string; title: string}[]>([]);
+  
   // Edit state for client linked entities
   const [editLinkedProjectIds, setEditLinkedProjectIds] = useState<string[]>([]);
   const [editLinkedPeopleIds, setEditLinkedPeopleIds] = useState<string[]>([]);
@@ -95,6 +99,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
   // Edit state for method linked entities
   const [editLinkedMethodOfferIds, setEditLinkedMethodOfferIds] = useState<string[]>([]);
   const [editLinkedMethodPeopleIds, setEditLinkedMethodPeopleIds] = useState<string[]>([]);
+  
+  // Edit state for market linked entities
+  const [editLinkedMarketClientIds, setEditLinkedMarketClientIds] = useState<string[]>([]);
+  const [editLinkedMarketProjectIds, setEditLinkedMarketProjectIds] = useState<string[]>([]);
 
   // Fetch linked entities when viewing a client or project
   useEffect(() => {
@@ -370,6 +378,43 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
           setLinkedMethodPeople([]);
         }
       }
+      
+      // Market: fetch linked clients and projects
+      if (entry.category === 'market') {
+        // Fetch linked clients via market_client_links
+        const { data: clientLinks } = await supabase
+          .from('market_client_links')
+          .select('client_id')
+          .eq('market_id', entry.id);
+        
+        if (clientLinks && clientLinks.length > 0) {
+          const clientIds = clientLinks.map(l => l.client_id);
+          const { data: clients } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', clientIds);
+          setLinkedMarketClients(clients || []);
+        } else {
+          setLinkedMarketClients([]);
+        }
+        
+        // Fetch linked projects via market_project_links
+        const { data: projectLinks } = await supabase
+          .from('market_project_links')
+          .select('project_id')
+          .eq('market_id', entry.id);
+        
+        if (projectLinks && projectLinks.length > 0) {
+          const projectIds = projectLinks.map(l => l.project_id);
+          const { data: projects } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', projectIds);
+          setLinkedMarketProjects(projects || []);
+        } else {
+          setLinkedMarketProjects([]);
+        }
+      }
     };
     
     // Reset edit state when entry changes
@@ -390,6 +435,10 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
     setLinkedMethodPeople([]);
     setEditLinkedMethodOfferIds([]);
     setEditLinkedMethodPeopleIds([]);
+    setLinkedMarketClients([]);
+    setLinkedMarketProjects([]);
+    setEditLinkedMarketClientIds([]);
+    setEditLinkedMarketProjectIds([]);
     
     fetchLinkedEntities();
   }, [entry?.id, open]);
@@ -428,7 +477,15 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
         setEditLinkedMethodPeopleIds(linkedMethodPeople.map(p => p.id));
       }
     }
-  }, [isEditing, linkedMethods, linkedProjectPeople, linkedProjects, linkedPeople, linkedOfferMethods, linkedOfferPeople, linkedMethodOffers, linkedMethodPeople, entry?.category]);
+    if (isEditing && entry?.category === 'market') {
+      if (linkedMarketClients.length > 0 && editLinkedMarketClientIds.length === 0) {
+        setEditLinkedMarketClientIds(linkedMarketClients.map(c => c.id));
+      }
+      if (linkedMarketProjects.length > 0 && editLinkedMarketProjectIds.length === 0) {
+        setEditLinkedMarketProjectIds(linkedMarketProjects.map(p => p.id));
+      }
+    }
+  }, [isEditing, linkedMethods, linkedProjectPeople, linkedProjects, linkedPeople, linkedOfferMethods, linkedOfferPeople, linkedMethodOffers, linkedMethodPeople, linkedMarketClients, linkedMarketProjects, entry?.category]);
 
   // Fetch uploaded documents for offers
   useEffect(() => {
@@ -866,6 +923,41 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
             .insert({
               person_id: personId,
               method_id: entry.id,
+            });
+        }
+      }
+
+      // Handle market-client and market-project linking
+      if (entry.category === 'market') {
+        // Remove existing client links
+        await supabase
+          .from('market_client_links')
+          .delete()
+          .eq('market_id', entry.id);
+
+        // Add new client links
+        for (const clientId of editLinkedMarketClientIds) {
+          await supabase
+            .from('market_client_links')
+            .insert({
+              market_id: entry.id,
+              client_id: clientId,
+            });
+        }
+
+        // Remove existing project links
+        await supabase
+          .from('market_project_links')
+          .delete()
+          .eq('market_id', entry.id);
+
+        // Add new project links
+        for (const projectId of editLinkedMarketProjectIds) {
+          await supabase
+            .from('market_project_links')
+            .insert({
+              market_id: entry.id,
+              project_id: projectId,
             });
         }
       }
@@ -1617,8 +1709,72 @@ export function EntryDetailSheet({ entry, open, onOpenChange, onEntryUpdated, on
             </div>
           )}
 
-          {/* Tags - hide for clients */}
-          {entry.category !== 'client' && (
+          {/* Market specific: Linked Clients */}
+          {entry.category === 'market' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-primary" />
+                Linked Clients
+              </h4>
+              {isEditing ? (
+                <MultiEntityAutocomplete
+                  category="client"
+                  selectedIds={editLinkedMarketClientIds}
+                  onSelectionChange={setEditLinkedMarketClientIds}
+                  placeholder="Search and link clients..."
+                />
+              ) : linkedMarketClients.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedMarketClients.map((client) => (
+                    <LinkedEntityBadge
+                      key={client.id}
+                      id={client.id}
+                      title={client.title} 
+                      category="client"
+                      onClick={() => onNavigateToEntry?.(client.id)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No clients linked</p>
+              )}
+            </div>
+          )}
+
+          {/* Market specific: Linked Projects */}
+          {entry.category === 'market' && (
+            <div>
+              <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                <FolderKanban className="w-4 h-4 text-category-project" />
+                Linked Projects
+              </h4>
+              {isEditing ? (
+                <MultiEntityAutocomplete
+                  category="project"
+                  selectedIds={editLinkedMarketProjectIds}
+                  onSelectionChange={setEditLinkedMarketProjectIds}
+                  placeholder="Search and link projects..."
+                />
+              ) : linkedMarketProjects.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {linkedMarketProjects.map((project) => (
+                    <LinkedEntityBadge
+                      key={project.id}
+                      id={project.id}
+                      title={project.title} 
+                      category="project"
+                      onClick={() => onNavigateToEntry?.(project.id)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No projects linked</p>
+              )}
+            </div>
+          )}
+
+          {/* Tags - hide for clients and markets */}
+          {entry.category !== 'client' && entry.category !== 'market' && (
             <div>
               <h4 className="text-sm font-medium mb-2 flex items-center gap-1.5">
                 <Tag className="w-4 h-4 text-muted-foreground" />

@@ -1,4 +1,4 @@
-export type KnowledgeCategory = 'project' | 'offer' | 'method' | 'client' | 'person';
+export type KnowledgeCategory = 'project' | 'offer' | 'method' | 'client' | 'person' | 'market';
 
 export type OfferStatus = 'draft' | 'pending' | 'won' | 'lost';
 export type OfferWorkStatus = 'under_development' | 'delivered';

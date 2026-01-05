@@ -14,6 +14,7 @@ interface LinkedEntitiesResult {
   linkedProjects: LinkedEntity[];
   linkedOffers: LinkedEntity[];
   linkedClients: LinkedEntity[];
+  linkedMarkets: LinkedEntity[];
   isLoading: boolean;
   refetch: () => Promise<void>;
 }
@@ -138,6 +139,7 @@ export function useLinkedEntitiesForEntry(entryId: string | null, category: Know
   const [linkedProjects, setLinkedProjects] = useState<LinkedEntity[]>([]);
   const [linkedOffers, setLinkedOffers] = useState<LinkedEntity[]>([]);
   const [linkedClients, setLinkedClients] = useState<LinkedEntity[]>([]);
+  const [linkedMarkets, setLinkedMarkets] = useState<LinkedEntity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   const refetch = useCallback(async () => {
@@ -148,6 +150,7 @@ export function useLinkedEntitiesForEntry(entryId: string | null, category: Know
       setLinkedProjects([]);
       setLinkedOffers([]);
       setLinkedClients([]);
+      setLinkedMarkets([]);
       return;
     }
     
@@ -456,6 +459,50 @@ export function useLinkedEntitiesForEntry(entryId: string | null, category: Know
         // Reset methods and clients for method
         setLinkedMethods([]);
         setLinkedClients([]);
+        setLinkedMarkets([]);
+      }
+      
+      // Fetch linked entities for markets (clients and projects)
+      if (category === 'market') {
+        setLinkedClient(null);
+        setLinkedMethods([]);
+        setLinkedPeople([]);
+        setLinkedOffers([]);
+        setLinkedMarkets([]);
+        
+        // Fetch linked clients via market_client_links
+        const { data: clientLinks } = await supabase
+          .from('market_client_links')
+          .select('client_id')
+          .eq('market_id', entryId);
+        
+        if (clientLinks && clientLinks.length > 0) {
+          const clientIds = clientLinks.map(l => l.client_id);
+          const { data: clients } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', clientIds);
+          setLinkedClients(clients || []);
+        } else {
+          setLinkedClients([]);
+        }
+        
+        // Fetch linked projects via market_project_links
+        const { data: projectLinks } = await supabase
+          .from('market_project_links')
+          .select('project_id')
+          .eq('market_id', entryId);
+        
+        if (projectLinks && projectLinks.length > 0) {
+          const projectIds = projectLinks.map(l => l.project_id);
+          const { data: projects } = await supabase
+            .from('knowledge_entries')
+            .select('id, title')
+            .in('id', projectIds);
+          setLinkedProjects(projects || []);
+        } else {
+          setLinkedProjects([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching linked entities:', error);
@@ -468,5 +515,5 @@ export function useLinkedEntitiesForEntry(entryId: string | null, category: Know
     refetch();
   }, [refetch]);
   
-  return { linkedClient, linkedMethods, linkedPeople, linkedProjects, linkedOffers, linkedClients, isLoading, refetch };
+  return { linkedClient, linkedMethods, linkedPeople, linkedProjects, linkedOffers, linkedClients, linkedMarkets, isLoading, refetch };
 }
