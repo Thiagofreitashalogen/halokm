@@ -1,19 +1,19 @@
-project_id = "gnterrcqsxzqdtlbutgj"
+project_id = "qoitxdkjaecmzffubzgw"
 
 [functions.summarize-project]
-verify_jwt = true
+verify_jwt = false
 
 [functions.analyze-entry]
-verify_jwt = true
+verify_jwt = false
 
 [functions.parse-document]
-verify_jwt = true
+verify_jwt = false
 
 [functions.fetch-google-drive]
-verify_jwt = true
+verify_jwt = false
 
 [functions.analyze-loss-reasons]
-verify_jwt = true
+verify_jwt = false
 
 [functions.smart-search]
 verify_jwt = false

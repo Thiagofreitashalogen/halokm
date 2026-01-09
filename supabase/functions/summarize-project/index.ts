@@ -13,9 +13,9 @@ serve(async (req) => {
   try {
     const { driveContent, miroContent } = await req.json();
     
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
     const combinedContent = `
@@ -28,18 +28,7 @@ ${miroContent || 'No content provided'}
 
     console.log('Summarizing project content...');
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert at analyzing design consultancy project documentation and extracting structured summaries.
+    const systemPrompt = `You are an expert at analyzing design consultancy project documentation and extracting structured summaries.
 
 Your task is to analyze the provided content and extract:
 1. A SHORT SUMMARY: Maximum 3 paragraphs that concisely summarize what the project was about
@@ -96,11 +85,24 @@ Example structure:
 <h2>Deliverables & Outcomes</h2>
 <p>What was produced and the results achieved...</p>
 
-If you cannot extract certain information, use empty arrays or null. Always return valid JSON with HTML-formatted full_description.`
-          },
+If you cannot extract certain information, use empty arrays or null. Always return valid JSON with HTML-formatted full_description.`;
+
+    const userPrompt = `Please analyze this project documentation and extract the structured summary:\n\n${combinedContent}`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 4096,
+        messages: [
           {
             role: 'user',
-            content: `Please analyze this project documentation and extract the structured summary:\n\n${combinedContent}`
+            content: `${systemPrompt}\n\n${userPrompt}`
           }
         ],
       }),
@@ -108,8 +110,8 @@ If you cannot extract certain information, use empty arrays or null. Always retu
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      
+      console.error('Anthropic API error:', response.status, errorText);
+
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
           status: 429,
@@ -122,12 +124,12 @@ If you cannot extract certain information, use empty arrays or null. Always retu
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      
-      throw new Error(`AI Gateway error: ${response.status}`);
+
+      throw new Error(`Anthropic API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const content = data.content?.[0]?.text;
     
     console.log('AI response:', content);
 

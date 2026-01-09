@@ -59,7 +59,7 @@ interface UploadedFile {
 
 export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCategory }: AddEntryDialogProps) => {
   const { toast } = useToast();
-  const { isGoogleConnected, accessToken, signInWithGoogle, user } = useGoogleAuth();
+  const { isGoogleConnected, accessToken, signInWithGoogle, user, refreshToken } = useGoogleAuth();
   
   const [tabMode, setTabMode] = useState<TabMode>('upload');
   const [step, setStep] = useState<Step>('input');
@@ -198,18 +198,75 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
   };
 
   const fetchGoogleDriveFile = async (url: string): Promise<{ content: string; fileName: string }> => {
-    if (!accessToken) {
+    let currentToken = accessToken;
+
+    if (!currentToken) {
       throw new Error('Please sign in with Google to access private files');
     }
 
     // Step 1: Fetch file from Google Drive
     setProcessingStatus('Fetching file from Google Drive...');
-    const { data: driveData, error: driveError } = await supabase.functions.invoke('fetch-google-drive', {
-      body: { url, accessToken },
+    console.log('Calling fetch-google-drive with token:', {
+      hasAccessToken: !!currentToken,
+      tokenPreview: currentToken?.substring(0, 20) + '...'
     });
 
+    let { data: driveData, error: driveError } = await supabase.functions.invoke('fetch-google-drive', {
+      body: { url, accessToken: currentToken },
+    });
+
+    // Try to extract the actual error message from the response
+    let actualError = driveData?.error;
+    if (driveError && !actualError) {
+      try {
+        // @ts-ignore - accessing context property
+        const response = driveError.context;
+        if (response) {
+          const errorText = await response.text();
+          console.log('Error response body:', errorText);
+          try {
+            const errorBody = JSON.parse(errorText);
+            actualError = errorBody?.error || errorText;
+          } catch {
+            actualError = errorText;
+          }
+        }
+      } catch (e) {
+        console.error('Could not parse error response:', e);
+      }
+    }
+
+    console.log('Drive API response:', { driveData, driveError, actualError, status: driveError?.context?.status });
+
+    // If we get a 401 or token expiry error, try refreshing the token and retry once
+    if (driveError?.message?.includes('401') || driveError?.message?.includes('Unauthorized') ||
+        actualError?.includes('token expired') || actualError?.includes('Access token expired') ||
+        actualError?.includes('Please sign in with Google again')) {
+      console.log('Token appears expired, attempting refresh...');
+      setProcessingStatus('Refreshing access token...');
+
+      try {
+        currentToken = await refreshToken();
+        if (!currentToken) {
+          throw new Error('Failed to refresh token. Please sign in with Google again.');
+        }
+
+        console.log('Token refreshed, retrying request...');
+        setProcessingStatus('Fetching file from Google Drive...');
+        const retryResult = await supabase.functions.invoke('fetch-google-drive', {
+          body: { url, accessToken: currentToken },
+        });
+
+        driveData = retryResult.data;
+        driveError = retryResult.error;
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        throw new Error('Your Google session has expired. Please sign in with Google again.');
+      }
+    }
+
     if (driveError || !driveData?.success) {
-      throw new Error(driveData?.error || driveError?.message || 'Failed to fetch file from Google Drive');
+      throw new Error(actualError || driveData?.error || driveError?.message || 'Failed to fetch file from Google Drive');
     }
 
     // Step 2: If it's a PDF or binary file, parse it with Unstructured
@@ -394,19 +451,32 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
       }
 
       setProcessingStatus('Analyzing content with AI...');
-      
+
+      console.log('Calling analyze-entry with:', {
+        fileContentsLength: (fileContents + (additionalContent ? '\n\n' + additionalContent : '')).length,
+        pastedContentLength: pastedContent.length,
+        hasLinks: !!linkInput && !isGoogleDriveUrl(linkInput),
+        suggestedCategory: defaultCategory
+      });
+
       const { data, error } = await supabase.functions.invoke('analyze-entry', {
-        body: { 
+        body: {
           fileContents: fileContents + (additionalContent ? '\n\n' + additionalContent : ''),
           pastedContent,
           links: isGoogleDriveUrl(linkInput) ? '' : linkInput, // Don't pass Google Drive URLs as raw links
-          suggestedCategory: defaultCategory 
+          suggestedCategory: defaultCategory
         },
       });
 
-      if (error) throw error;
+      console.log('analyze-entry response:', { data, error });
+
+      if (error) {
+        console.error('analyze-entry error:', error);
+        throw error;
+      }
 
       if (data.summary) {
+        console.log('Summary received:', data.summary);
         // Clear methods for projects - users should add these manually
         if (data.summary.category === 'project') {
           data.summary.methods = [];
@@ -414,6 +484,7 @@ export const AddEntryDialog = ({ open, onOpenChange, onEntryAdded, defaultCatego
         setSummary(data.summary);
         setStep('review');
       } else {
+        console.error('No summary in response:', data);
         throw new Error('No summary returned');
       }
     } catch (error) {

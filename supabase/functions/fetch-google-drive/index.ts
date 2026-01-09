@@ -86,6 +86,15 @@ serve(async (req) => {
     const metadata = await metadataResponse.json();
     console.log('File metadata:', metadata);
 
+    // Check file size limit (20MB for binary files, 100MB for text files)
+    const maxBinarySize = 20 * 1024 * 1024; // 20MB
+    const maxTextSize = 100 * 1024 * 1024; // 100MB
+    const fileSize = parseInt(metadata.size || '0');
+
+    if (fileSize > maxTextSize) {
+      throw new Error(`File is too large (${Math.round(fileSize / 1024 / 1024)}MB). Maximum supported size is 100MB.`);
+    }
+
     // Determine export format based on file type
     let exportMimeType = 'text/plain';
     let downloadUrl = '';
@@ -131,14 +140,23 @@ serve(async (req) => {
     if (contentType.includes('text') || contentType.includes('csv') || contentType.includes('json')) {
       content = await contentResponse.text();
     } else {
-      // For binary files (PDF, etc.), return as base64
+      // For binary files (PDF, etc.), check size limit and return as base64
       const buffer = await contentResponse.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
+      if (buffer.byteLength > maxBinarySize) {
+        throw new Error(`Binary file is too large (${Math.round(buffer.byteLength / 1024 / 1024)}MB). Maximum supported size for PDFs/presentations is 20MB.`);
       }
-      content = btoa(binary);
+
+      // Use more efficient base64 encoding
+      const bytes = new Uint8Array(buffer);
+      const chunks: string[] = [];
+      const chunkSize = 8192;
+
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.slice(i, i + chunkSize);
+        chunks.push(String.fromCharCode(...chunk));
+      }
+
+      content = btoa(chunks.join(''));
       isBase64 = true;
     }
 

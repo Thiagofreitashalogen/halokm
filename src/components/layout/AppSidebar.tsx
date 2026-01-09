@@ -1,7 +1,7 @@
 import { Database, FileText, Lightbulb, FolderOpen, Search, Settings, Sparkles, Users, UserCircle, LogOut, Brain, PenTool, Globe } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { logout } from '@/pages/LoginPage';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -35,9 +35,10 @@ const toolsNavItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut, user } = useGoogleAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate('/login', { replace: true });
   };
 
@@ -114,6 +115,13 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border space-y-2">
+        {user && (
+          <div className="px-3 py-2 mb-1">
+            <p className="text-xs text-muted-foreground">Signed in as</p>
+            <p className="text-sm font-medium text-sidebar-foreground truncate">{user.email}</p>
+          </div>
+        )}
+
         <NavLink
           to="/settings"
           className={cn(
@@ -126,7 +134,7 @@ export function AppSidebar() {
           <Settings className="w-4 h-4" />
           <span>Settings</span>
         </NavLink>
-        
+
         <Button
           variant="ghost"
           size="sm"

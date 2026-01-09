@@ -87,13 +87,11 @@ async function parseWithUnstructured(file: Blob, fileName: string): Promise<stri
   }
 
   console.log('Parsing with Unstructured.io API...', { fileSize: file.size, fileName });
-  
+
   const formData = new FormData();
   formData.append('files', new File([file], fileName));
-  
-  // Use fast strategy for quicker processing
   formData.append('strategy', 'fast');
-  
+
   const response = await fetch('https://api.unstructuredapp.io/general/v0/general', {
     method: 'POST',
     headers: {

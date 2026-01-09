@@ -20,15 +20,37 @@ export function useGoogleAuth() {
   });
 
   useEffect(() => {
+    // Helper function to extract provider_token from localStorage as fallback
+    const getProviderTokenFromStorage = (): string | null => {
+      try {
+        const storageKey = `sb-${import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`;
+        const storedSession = localStorage.getItem(storageKey);
+        if (storedSession) {
+          const parsed = JSON.parse(storedSession);
+          return parsed?.provider_token || null;
+        }
+      } catch (error) {
+        console.error('Error reading provider_token from localStorage:', error);
+      }
+      return null;
+    };
+
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        const providerToken = session?.provider_token || getProviderTokenFromStorage();
+        console.log('Auth state changed:', {
+          event,
+          hasSession: !!session,
+          hasProviderToken: !!providerToken,
+          user: session?.user?.email
+        });
         setState(prev => ({
           ...prev,
           session,
           user: session?.user ?? null,
-          accessToken: session?.provider_token ?? null,
-          isGoogleConnected: !!session?.provider_token,
+          accessToken: providerToken,
+          isGoogleConnected: !!providerToken,
           isLoading: false,
         }));
       }
@@ -36,12 +58,21 @@ export function useGoogleAuth() {
 
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      const providerToken = session?.provider_token || getProviderTokenFromStorage();
+      console.log('Google Auth - Session loaded:', {
+        hasSession: !!session,
+        hasProviderTokenInSession: !!session?.provider_token,
+        hasProviderTokenInStorage: !!getProviderTokenFromStorage(),
+        finalProviderToken: !!providerToken,
+        providerToken: providerToken?.substring(0, 20) + '...',
+        user: session?.user?.email
+      });
       setState(prev => ({
         ...prev,
         session,
         user: session?.user ?? null,
-        accessToken: session?.provider_token ?? null,
-        isGoogleConnected: !!session?.provider_token,
+        accessToken: providerToken,
+        isGoogleConnected: !!providerToken,
         isLoading: false,
       }));
     });
